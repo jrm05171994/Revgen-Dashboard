@@ -1,5 +1,6 @@
 const ATTIO_BASE = "https://api.attio.com/v2";
-const ATTIO_KEY = process.env.ATTIO_API_KEY!;
+const ATTIO_KEY = process.env.ATTIO_API_KEY;
+if (!ATTIO_KEY) throw new Error("ATTIO_API_KEY environment variable is not set");
 
 // ─── Generic fetch helper ────────────────────────────────────────────────────
 
@@ -129,6 +130,13 @@ const PAYMENT_MAP: Record<string, string> = {
   "Success Fee":  "success_fee",
 };
 
+const BUDGET_CYCLE_MAP: Record<string, string> = {
+  "Q1": "Q1",
+  "Q2": "Q2",
+  "Q3": "Q3",
+  "Q4": "Q4",
+};
+
 // ─── Typed output types ───────────────────────────────────────────────────────
 
 export type AttioDeal = {
@@ -143,7 +151,7 @@ export type AttioDeal = {
   paymentStructure: string | null;
   firstConvoDate: Date | null;
   expectedClosedDate: Date | null;
-  closedLostDate: Date | null;
+  closeDate: Date | null;
   implementationFeeValue: number | null;
   integrationFeeValue: number | null;
   attioCreatedAt: Date | null;
@@ -179,7 +187,7 @@ export async function fetchDeals(): Promise<AttioDeal[]> {
     paymentStructure: mapOrNull(getStatus(r, "payment_structure"), PAYMENT_MAP),
     firstConvoDate: getDate(r, "first_conversation_date"),
     expectedClosedDate: getDate(r, "expected_closed_date"),
-    closedLostDate: getDate(r, "close_date"),
+    closeDate: getDate(r, "close_date"),
     implementationFeeValue: getNumber(r, "implementation_fee_value"),
     integrationFeeValue: getNumber(r, "integration_fee_value"),
     attioCreatedAt: getDate(r, "created_at"),
@@ -197,7 +205,7 @@ export async function fetchCompanies(): Promise<AttioCompany[]> {
     icpTier: getNumber(r, "icp_tier"),
     icpFitScore: getNumber(r, "icp_fit_score"),
     patientPopulation: getNumber(r, "patient_member_population"),
-    budgetCycle: getStatus(r, "budget_cycle"),
+    budgetCycle: mapOrNull(getStatus(r, "budget_cycle"), BUDGET_CYCLE_MAP),
     attioCreatedAt: getDate(r, "created_at"),
     attioUpdatedAt: getDate(r, "updated_at"),
   }));
