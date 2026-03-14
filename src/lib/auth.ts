@@ -33,14 +33,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
 
-    async session({ session, user }) {
-      // Attach role to session so UI can gate by role
-      const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { role: true },
-      });
-      if (dbUser) {
-        session.user.role = dbUser.role as UserRole;
+    async jwt({ token, user }) {
+      // On first sign-in, fetch role from DB and store in token
+      if (user?.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { id: true, role: true },
+        });
+        token.id = dbUser?.id ?? user.id;
+        token.role = dbUser?.role ?? "REVGEN";
+      }
+      return token;
+    },
+
+    async session({ session, token }) {
+      // Attach id and role from JWT token to session
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as UserRole;
       }
       return session;
     },
