@@ -29,19 +29,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Session email missing" }, { status: 500 });
   }
 
-  const invite = await prisma.invite.upsert({
-    where: { email },
-    update: { role, usedAt: null, invitedBy: session.user.email },
-    create: { email, role, invitedBy: session.user.email },
-  });
-
-  await prisma.auditLog.create({
-    data: {
-      action: "USER_INVITED",
-      userId: session.user.id,
-      details: { email, role },
-    },
-  });
+  const [invite] = await prisma.$transaction([
+    prisma.invite.upsert({
+      where: { email },
+      update: { role, usedAt: null, invitedBy: session.user.email },
+      create: { email, role, invitedBy: session.user.email },
+    }),
+    prisma.auditLog.create({
+      data: {
+        action: "USER_INVITED",
+        userId: session.user.id,
+        details: { email, role },
+      },
+    }),
+  ]);
 
   return NextResponse.json({ invite });
 }
