@@ -9,14 +9,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   callbacks: {
     async signIn({ user }) {
-      // Invite-only: user must have an unused Invite record
       if (!user.email) return false;
+
+      // If user already exists in DB, allow sign-in
+      const existingUser = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { id: true },
+      });
+      if (existingUser) return true;
+
+      // New user — must have an unused invite
       const invite = await prisma.invite.findUnique({
         where: { email: user.email },
       });
       if (!invite || invite.usedAt) return false;
 
-      // Mark invite as used — role will be applied in events.createUser
+      // Mark invite as used — role applied in events.createUser
       await prisma.invite.update({
         where: { email: user.email },
         data: { usedAt: new Date() },
