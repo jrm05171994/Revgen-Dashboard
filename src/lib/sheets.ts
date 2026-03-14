@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import type { DealStage } from "@prisma/client";
 
 const SHEET_ID = process.env.GOOGLE_SHEETS_ID!;
 const ASSUMPTIONS_RANGE = "'Pipeline funnel math - 2026'!A15:D20";
@@ -13,7 +14,7 @@ const SHEET_STAGE_MAP: Record<string, string> = {
 };
 
 export type SheetAssumption = {
-  stage: string;
+  stage: DealStage;
   avgDaysInStage: number;
   conversionToNext: number;
   overallCloseRate: number;
@@ -41,11 +42,11 @@ export async function fetchSheetAssumptions(): Promise<SheetAssumption[]> {
     const slug = SHEET_STAGE_MAP[stageName];
     if (!slug) continue;
 
-    const avgDaysInStage = parseFloat(String(row[1]).replace(/,/g, "")) || 0;
+    const avgDaysInStage = Math.round(parseFloat(String(row[1]).replace(/,/g, "")) || 0);
     const conversionToNext = parseFloat(String(row[2]).replace(/%/g, "")) / 100 || 0;
     const overallCloseRate = parseFloat(String(row[3]).replace(/%/g, "")) / 100 || 0;
 
-    results.push({ stage: slug, avgDaysInStage, conversionToNext, overallCloseRate });
+    results.push({ stage: slug as DealStage, avgDaysInStage, conversionToNext, overallCloseRate });
   }
 
   return results;

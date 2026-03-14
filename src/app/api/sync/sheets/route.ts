@@ -10,16 +10,18 @@ export async function POST(req: NextRequest) {
   try {
     const assumptions = await fetchSheetAssumptions();
 
-    for (const a of assumptions) {
-      await prisma.stageAssumption.update({
-        where: { stage: a.stage as any },
-        data: {
-          avgDaysInStage: a.avgDaysInStage,
-          conversionToNext: a.conversionToNext,
-          overallCloseRate: a.overallCloseRate,
-        },
-      });
-    }
+    await Promise.all(
+      assumptions.map((a) =>
+        prisma.stageAssumption.update({
+          where: { stage: a.stage },
+          data: {
+            avgDaysInStage: a.avgDaysInStage,
+            conversionToNext: a.conversionToNext,
+            overallCloseRate: a.overallCloseRate,
+          },
+        })
+      )
+    );
 
     await prisma.auditLog.create({
       data: {
