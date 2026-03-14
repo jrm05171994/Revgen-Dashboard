@@ -40,19 +40,29 @@ async function attioQuery(objectSlug: string, body: object = {}) {
 
 // ─── Value extractors ────────────────────────────────────────────────────────
 
+type AttioValue = {
+  value?: string | number | null;
+  currency_value?: number | null;
+  status?: { title: string } | null;
+  option?: { title: string } | null;
+  target_record_id?: string | null;
+};
+
 export type AttioRecord = {
   id: { record_id: string };
-  values: Record<string, any[]>;
+  values: Record<string, AttioValue[]>;
 };
 
 function getText(record: AttioRecord, slug: string): string | null {
-  return record.values[slug]?.[0]?.value ?? null;
+  const v = record.values[slug]?.[0]?.value;
+  return typeof v === "string" ? v : null;
 }
 
 function getNumber(record: AttioRecord, slug: string): number | null {
   const v = record.values[slug]?.[0];
   if (!v) return null;
-  return v.value ?? v.currency_value ?? null;
+  const n = v.value ?? v.currency_value;
+  return typeof n === "number" ? n : null;
 }
 
 function getStatus(record: AttioRecord, slug: string): string | null {
@@ -63,7 +73,7 @@ function getStatus(record: AttioRecord, slug: string): string | null {
 
 function getDate(record: AttioRecord, slug: string): Date | null {
   const v = record.values[slug]?.[0]?.value;
-  return v ? new Date(v) : null;
+  return typeof v === "string" ? new Date(v) : null;
 }
 
 function getRef(record: AttioRecord, slug: string): string | null {

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { fetchDeals, fetchCompanies } from "@/lib/attio";
 import { buildDealUpsert } from "@/lib/sync-utils";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import type { SalesType, CompanyStage, BudgetCycle } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
   const authError = verifyCronAuth(req);
@@ -20,24 +21,24 @@ export async function POST(req: NextRequest) {
         where: { id: company.id },
         update: {
           name: company.name,
-          salesType: company.salesType as any,
-          companyStage: company.companyStage as any,
+          salesType: company.salesType as SalesType | null,
+          companyStage: company.companyStage as CompanyStage | null,
           icpTier: company.icpTier,
           icpFitScore: company.icpFitScore,
           patientPopulation: company.patientPopulation,
-          budgetCycle: company.budgetCycle as any,
+          budgetCycle: company.budgetCycle as BudgetCycle | null,
           attioUpdatedAt: company.attioUpdatedAt,
           lastSyncedAt: new Date(),
         },
         create: {
           id: company.id,
           name: company.name,
-          salesType: company.salesType as any,
-          companyStage: company.companyStage as any,
+          salesType: company.salesType as SalesType | null,
+          companyStage: company.companyStage as CompanyStage | null,
           icpTier: company.icpTier,
           icpFitScore: company.icpFitScore,
           patientPopulation: company.patientPopulation,
-          budgetCycle: company.budgetCycle as any,
+          budgetCycle: company.budgetCycle as BudgetCycle | null,
           attioCreatedAt: company.attioCreatedAt,
           attioUpdatedAt: company.attioUpdatedAt,
           lastSyncedAt: new Date(),

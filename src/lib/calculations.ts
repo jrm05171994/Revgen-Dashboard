@@ -1,4 +1,4 @@
-import type { Deal, StageAssumption } from "@prisma/client";
+import type { Deal, StageAssumption, DealStage } from "@prisma/client";
 
 export const STAGE_ORDER = [
   "first_convo",
@@ -17,11 +17,11 @@ export function weightedForecast(
   deals: Pick<Deal, "value" | "stage" | "status">[],
   assumptions: StageAssumption[]
 ): number {
-  const rateMap = new Map(assumptions.map((a) => [a.stage, a.overallCloseRate]));
+  const rateMap = new Map<string, number>(assumptions.map((a) => [a.stage as string, a.overallCloseRate]));
   return deals
     .filter((d) => d.status === "active" && d.stage)
     .reduce((sum, d) => {
-      const rate = rateMap.get(d.stage as any) ?? 0;
+      const rate = rateMap.get(d.stage as string) ?? 0;
       return sum + (Number(d.value) || 0) * rate;
     }, 0);
 }
@@ -39,12 +39,12 @@ export function inYearRevenue(
   yearStart: Date,
   assumptions: StageAssumption[]
 ): number {
-  const assumptionMap = new Map(assumptions.map((a) => [a.stage, a]));
+  const assumptionMap = new Map<string, StageAssumption>(assumptions.map((a) => [a.stage as string, a]));
   const stageIndex = STAGE_ORDER.indexOf(stage);
 
   const remainingDays =
     STAGE_ORDER.slice(stageIndex).reduce((sum, s) => {
-      return sum + (assumptionMap.get(s as any)?.avgDaysInStage ?? 0);
+      return sum + (assumptionMap.get(s)?.avgDaysInStage ?? 0);
     }, 0) + 60; // +60d implementation buffer
 
   const daysElapsed = Math.floor(
@@ -52,7 +52,7 @@ export function inYearRevenue(
   );
 
   const timingFactor = Math.max(0, (365 - remainingDays - daysElapsed) / 365);
-  const closeRate = assumptionMap.get(stage as any)?.overallCloseRate ?? 0;
+  const closeRate = assumptionMap.get(stage)?.overallCloseRate ?? 0;
 
   return pipelineAtStage * closeRate * timingFactor;
 }
@@ -66,7 +66,8 @@ export function groupDeals(
 ): Record<string, { value: number; count: number }> {
   const result: Record<string, { value: number; count: number }> = {};
   for (const deal of deals.filter((d) => d.status === "active")) {
-    const k = String((deal as any)[key] ?? "unknown");
+    const raw = deal[key] as DealStage | string | null;
+    const k = String(raw ?? "unknown");
     if (!result[k]) result[k] = { value: 0, count: 0 };
     result[k].value += Number(deal.value) || 0;
     result[k].count += 1;
