@@ -19,8 +19,11 @@ export const authConfig: NextAuthConfig = {
       const isLoggedIn = !!auth?.user;
       const isAuthRoute = nextUrl.pathname.startsWith("/login");
       const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
+      const isCronRoute =
+        nextUrl.pathname.startsWith("/api/sync") ||
+        nextUrl.pathname.startsWith("/api/snapshot");
 
-      if (isApiAuthRoute) return true;
+      if (isApiAuthRoute || isCronRoute) return true;
       if (isAuthRoute) {
         if (isLoggedIn) return Response.redirect(new URL("/", nextUrl));
         return true;
