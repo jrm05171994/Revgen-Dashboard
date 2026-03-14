@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/sync/attio",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/sync/sheets",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/snapshot",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
