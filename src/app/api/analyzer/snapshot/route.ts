@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { generateSnapshotManifest } from "@/lib/attio-snapshot";
 
+// Snapshot generation calls Attio for each deal — needs extended timeout
+export const maxDuration = 60; // seconds
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) {

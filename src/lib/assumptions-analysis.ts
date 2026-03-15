@@ -51,7 +51,8 @@ export async function getAssumptionsAnalysis(): Promise<AssumptionRow[]> {
     const atOrPast = deals.filter(
       (d) =>
         laterStages.includes(d.stage ?? "") ||
-        d.stage === "closed_won"
+        d.stage === "closed_won" ||
+        d.stage === "lost"
     );
     const pastThisStage = deals.filter(
       (d) =>

@@ -33,8 +33,8 @@ export function SnapshotPanel({ onReady }: Props) {
     setError(null);
     try {
       const [idA, idB] = await Promise.all([
-        generateSnapshot(dateA + "T23:59:59"),
-        generateSnapshot(dateB + "T23:59:59"),
+        generateSnapshot(dateA + "T00:00:00Z"),
+        generateSnapshot(dateB + "T00:00:00Z"),
       ]);
       onReady(idA, idB);
     } catch (e) {
