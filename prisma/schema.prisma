@@ -211,6 +211,47 @@ model PipelineSnapshot {
   @@index([capturedAt])
 }
 
+// ─── Analyzer Snapshots ───────────────────────────────────────────────────────
+
+model SnapshotManifest {
+  id          String          @id @default(uuid())
+  snapshotAt  DateTime        // the "as of" moment reconstructed from Attio history
+  generatedAt DateTime        @default(now())
+  dealCount   Int
+  deals       DealSnapshot[]
+  companies   CompanySnapshot[]
+
+  @@index([snapshotAt])
+}
+
+model DealSnapshot {
+  id         String          @id @default(uuid())
+  manifestId String
+  dealId     String          // mirrors Deal.id
+  name       String
+  companyId  String?
+  value      Decimal?        @db.Decimal(12, 2)
+  stage      String?         // raw stage slug ("first_convo", "contracting", etc.)
+  status     String?         // "active" | "won" | "lost" | "stalled"
+  manifest   SnapshotManifest @relation(fields: [manifestId], references: [id], onDelete: Cascade)
+
+  @@index([manifestId])
+  @@index([dealId])
+}
+
+model CompanySnapshot {
+  id           String          @id @default(uuid())
+  manifestId   String
+  companyId    String          // mirrors Company.id
+  name         String?
+  companyStage String?
+  icpTier      Int?
+  manifest     SnapshotManifest @relation(fields: [manifestId], references: [id], onDelete: Cascade)
+
+  @@index([manifestId])
+  @@index([companyId])
+}
+
 // ─── Actual Revenue (QuickBooks uploads) ──────────────────────────────────────
 
 enum MatchStatus {
