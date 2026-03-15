@@ -64,7 +64,7 @@ export type DealSnapshotInput = {
   companyId: string | null;
   value: number | null;
   stage: string | null;
-  status: string | null;
+  status: "active" | "won" | "lost" | "stalled" | null;
 };
 
 async function buildDealSnapshot(
@@ -77,7 +77,7 @@ async function buildDealSnapshot(
   const stageRaw = extractTitle(stageEntry);
   const stage = stageRaw ? (STAGE_MAP[stageRaw] ?? null) : null;
 
-  let status: string | null = null;
+  let status: "active" | "won" | "lost" | "stalled" | null = null;
   if (stage === "closed_won") status = "won";
   else if (stage === "lost") status = "lost";
   else if (stage) status = "active";
@@ -86,6 +86,13 @@ async function buildDealSnapshot(
 }
 
 export async function generateSnapshotManifest(targetDate: Date): Promise<string> {
+  // Return existing manifest if one already exists for this date (idempotent)
+  const existing = await prisma.snapshotManifest.findFirst({
+    where: { snapshotAt: targetDate },
+    orderBy: { generatedAt: "desc" },
+  });
+  if (existing) return existing.id;
+
   const deals = await prisma.deal.findMany({
     select: { id: true, name: true, companyId: true, value: true },
   });
@@ -97,14 +104,17 @@ export async function generateSnapshotManifest(targetDate: Date): Promise<string
         buildDealSnapshot(
           { id: d.id, name: d.name, companyId: d.companyId ?? null, value: d.value != null ? Number(d.value) : null },
           targetDate
-        ).catch(() => ({
-          dealId: d.id,
-          name: d.name,
-          companyId: d.companyId ?? null,
-          value: d.value != null ? Number(d.value) : null,
-          stage: null,
-          status: null,
-        }))
+        ).catch((err: unknown) => {
+          console.error(`[attio-snapshot] Failed to snapshot deal ${d.id} (${d.name}):`, err);
+          return {
+            dealId: d.id,
+            name: d.name,
+            companyId: d.companyId ?? null,
+            value: d.value != null ? Number(d.value) : null,
+            stage: null,
+            status: null,
+          };
+        })
       )
     )
   );
