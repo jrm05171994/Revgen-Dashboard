@@ -1,18 +1,22 @@
 import { Suspense } from "react";
 import { TopBar } from "@/components/layout/TopBar";
 import { ComparisonSelector } from "@/components/dashboard/ComparisonSelector";
+import { YearSelector } from "@/components/dashboard/YearSelector";
 import { DashboardKpiStrip } from "@/components/dashboard/DashboardKpiStrip";
 import { RevenueGoalCard } from "@/components/dashboard/RevenueGoalCard";
 import { TopDealsSection } from "@/components/dashboard/TopDealsSection";
 import { getDashboardData } from "@/lib/dashboard-data";
 
 type Props = {
-  searchParams: { compare?: string };
+  searchParams: { compare?: string; year?: string };
 };
 
 export default async function DashboardPage({ searchParams }: Props) {
   const raw = parseInt(searchParams.compare ?? "30", 10);
   const comparisonDays = isNaN(raw) ? 30 : raw;
+  const rawYear = parseInt(searchParams.year ?? "2026", 10);
+  const year = isNaN(rawYear) ? 2026 : rawYear;
+  // TODO (Task 5): pass `year` as second arg once getDashboardData signature is updated
   const data = await getDashboardData(comparisonDays);
 
   return (
@@ -21,7 +25,10 @@ export default async function DashboardPage({ searchParams }: Props) {
         title="Dashboard"
         action={
           <Suspense>
-            <ComparisonSelector />
+            <div className="flex items-center gap-2">
+              <YearSelector />
+              <ComparisonSelector />
+            </div>
           </Suspense>
         }
       />
