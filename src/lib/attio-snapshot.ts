@@ -94,7 +94,7 @@ export async function generateSnapshotManifest(targetDate: Date): Promise<string
   ));
 
   // Return existing manifest if one already exists for this date (idempotent)
-  const existing = await prisma.snapshotManifest.findUnique({
+  const existing = await prisma.snapshotManifest.findFirst({
     where: { snapshotAt: normalizedDate },
   });
   if (existing) return existing.id;
