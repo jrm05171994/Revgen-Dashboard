@@ -11,8 +11,9 @@ export function LeadsKpiStrip({ data }: { data: LeadsData }) {
         subValue="Companies with active deals"
       />
       <KpiCard
-        label="Converted to First Convo"
+        label="Reached Opportunity Stage"
         value={String(data.convertedToFirstConvo)}
+        subValue="Moved to opportunity stage or beyond"
       />
       <KpiCard
         label="Conversion Rate"

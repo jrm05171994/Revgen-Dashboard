@@ -61,8 +61,14 @@ function getText(record: AttioRecord, slug: string): string | null {
 function getNumber(record: AttioRecord, slug: string): number | null {
   const v = record.values[slug]?.[0];
   if (!v) return null;
-  const n = v.value ?? v.currency_value;
-  return typeof n === "number" ? n : null;
+  const raw = v.value ?? v.currency_value;
+  if (typeof raw === "number") return raw;
+  // Attio may return numeric fields as strings (e.g., ICP tier "1", "2", "3")
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const parsed = Number(raw);
+    return isNaN(parsed) ? null : parsed;
+  }
+  return null;
 }
 
 function getStatus(record: AttioRecord, slug: string): string | null {

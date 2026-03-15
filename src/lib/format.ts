@@ -66,3 +66,13 @@ export const TIER_LABELS: Record<string, string> = {
   tier_3: "Tier 3",
   unknown: "No Tier",
 };
+
+export const COMPANY_STAGE_LABELS: Record<string, string> = {
+  unaware:     "Unaware",
+  aware:       "Aware",
+  engaged:     "Engaged",
+  opportunity: "Opportunity",
+  customer:    "Customer",
+  evangelist:  "Evangelist",
+  unknown:     "Unknown",
+};

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { DealStatus } from "@prisma/client";
+import type { DealStatus, CompanyStage } from "@prisma/client";
 import type { BreakdownEntry } from "@/lib/format";
 
 const ACTIVE_STAGES = [
@@ -14,13 +14,28 @@ type ActiveStage = (typeof ACTIVE_STAGES)[number];
 
 export type BlueprintRow = {
   stage: ActiveStage;
-  deadline: string;       // ISO string — date by which deals must be at this stage to close by EOY
-  isOverdue: boolean;     // deadline is in the past
-  requiredDeals: number;  // deals needed at this stage or later
-  requiredValue: number;  // pipeline value needed at this stage or later
-  actualDeals: number;    // current active deals at this stage or later
-  actualValue: number;    // current active pipeline value at this stage or later
-  delta: number;          // actualValue − requiredValue (negative = gap)
+  deadline: string;
+  isOverdue: boolean;
+  requiredDeals: number;
+  requiredValue: number;
+  actualDeals: number;
+  actualValue: number;
+  delta: number;
+};
+
+// Serializable assumption (for passing to client component)
+export type SerializedAssumption = {
+  stage: string;
+  overallCloseRate: number;
+  conversionToNext: number;
+  avgDaysInStage: number;
+};
+
+// Serializable deal (subset needed for blueprint calc)
+export type BlueprintDeal = {
+  id: string;
+  value: number | null;
+  stage: string | null;
 };
 
 export type LeadsData = {
@@ -30,13 +45,24 @@ export type LeadsData = {
   avgDaysToFirstConvo: number;
   bySource: BreakdownEntry[];
   byTier: BreakdownEntry[];
+  byStage: BreakdownEntry[];
   blueprint: BlueprintRow[];
+  assumptions: SerializedAssumption[];
+  activeDealsForBlueprint: BlueprintDeal[];
+  avgDealSize: number;
   revenueGoal: number;
   revenueGap: number;
   existingArr: number;
+  fiscalYearEnd: string;
+  year: number;
 };
 
-export async function getLeadsData(): Promise<LeadsData> {
+// Stages that classify as "leads" (not yet in the pipeline)
+const LEAD_STAGES: CompanyStage[] = ["unaware", "aware", "engaged"];
+// Stages that count as "converted" (entered the sales funnel)
+const CONVERTED_STAGES: CompanyStage[] = ["opportunity", "customer", "evangelist"];
+
+export async function getLeadsData(year = 2026): Promise<LeadsData> {
   const today = new Date();
 
   const [companies, activeDeals, assumptions, fiscalConfig] = await Promise.all([
@@ -44,6 +70,7 @@ export async function getLeadsData(): Promise<LeadsData> {
       select: {
         id: true,
         icpTier: true,
+        companyStage: true,
         attioCreatedAt: true,
         deals: {
           select: {
@@ -62,25 +89,30 @@ export async function getLeadsData(): Promise<LeadsData> {
       select: { id: true, value: true, stage: true, source: true },
     }),
     prisma.stageAssumption.findMany(),
-    prisma.fiscalConfig.findFirst({ where: { fiscalYear: 2026 } }),
+    prisma.fiscalConfig.findFirst({ where: { fiscalYear: year } }),
   ]);
 
   // ── Leads KPIs ──────────────────────────────────────────────────────────────
 
-  // A "lead" is a company with at least one deal
-  const companiesWithDeals = companies.filter((c) => c.deals.length > 0);
-  const totalLeads = companiesWithDeals.length;
-
-  // Converted = company with at least one deal that has a firstConvoDate
-  const converted = companiesWithDeals.filter((c) =>
-    c.deals.some((d) => d.firstConvoDate != null)
+  // "Leads" = companies at unaware / aware / engaged stage
+  const leadCompanies = companies.filter(
+    (c) => c.companyStage != null && LEAD_STAGES.includes(c.companyStage as CompanyStage)
   );
-  const convertedToFirstConvo = converted.length;
-  const conversionRate = totalLeads > 0 ? convertedToFirstConvo / totalLeads : 0;
+  const totalLeads = leadCompanies.length;
+
+  // "Converted" = companies that reached opportunity, customer, or evangelist stage
+  const convertedCompanies = companies.filter(
+    (c) => c.companyStage != null && CONVERTED_STAGES.includes(c.companyStage as CompanyStage)
+  );
+  const convertedToFirstConvo = convertedCompanies.length;
+
+  // Conversion rate = converted / (leads + converted)
+  const totalTracked = totalLeads + convertedToFirstConvo;
+  const conversionRate = totalTracked > 0 ? convertedToFirstConvo / totalTracked : 0;
 
   // Avg days to first convo: company.attioCreatedAt → earliest deal.firstConvoDate
   const conversionTimes: number[] = [];
-  for (const company of converted) {
+  for (const company of convertedCompanies) {
     if (!company.attioCreatedAt) continue;
     const firstConvoDates = company.deals
       .filter((d) => d.firstConvoDate != null)
@@ -97,23 +129,29 @@ export async function getLeadsData(): Promise<LeadsData> {
       ? Math.round(conversionTimes.reduce((s, d) => s + d, 0) / conversionTimes.length)
       : 0;
 
-  // ── Leads by source ─────────────────────────────────────────────────────────
-  // Group active deals by source; sort by count descending (volume of leads, not value)
+  // ── Leads by Source ──────────────────────────────────────────────────────────
   const bySourceMap: Record<string, { value: number; count: number }> = {};
-  for (const deal of activeDeals) {
-    const key = (deal.source as string) ?? "unknown";
-    if (!bySourceMap[key]) bySourceMap[key] = { value: 0, count: 0 };
-    bySourceMap[key].value += Number(deal.value ?? 0);
-    bySourceMap[key].count += 1;
+  for (const company of leadCompanies) {
+    for (const deal of company.deals) {
+      const key = (deal.source as string) ?? "unknown";
+      if (!bySourceMap[key]) bySourceMap[key] = { value: 0, count: 0 };
+      bySourceMap[key].value += Number(deal.value ?? 0);
+      bySourceMap[key].count += 1;
+    }
+  }
+  for (const company of leadCompanies) {
+    if (company.deals.length === 0) {
+      if (!bySourceMap["unknown"]) bySourceMap["unknown"] = { value: 0, count: 0 };
+      bySourceMap["unknown"].count += 1;
+    }
   }
   const bySource: BreakdownEntry[] = Object.entries(bySourceMap)
     .map(([key, v]) => ({ key, ...v }))
     .sort((a, b) => b.count - a.count);
 
-  // ── Leads by ICP tier ────────────────────────────────────────────────────────
-  // Group companies-with-deals by icpTier; value = their active pipeline value
+  // ── Leads by ICP Tier ────────────────────────────────────────────────────────
   const byTierMap: Record<string, { value: number; count: number }> = {};
-  for (const company of companiesWithDeals) {
+  for (const company of leadCompanies) {
     const key = company.icpTier != null ? `tier_${company.icpTier}` : "unknown";
     const pipelineValue = company.deals
       .filter((d) => (d.status as string) === "active" || (d.status as string) === "stalled")
@@ -122,22 +160,35 @@ export async function getLeadsData(): Promise<LeadsData> {
     byTierMap[key].value += pipelineValue;
     byTierMap[key].count += 1;
   }
-  const TIER_ORDER: Record<string, number> = {
-    tier_1: 0, tier_2: 1, tier_3: 2, unknown: 3,
-  };
+  const TIER_ORDER: Record<string, number> = { tier_1: 0, tier_2: 1, tier_3: 2, unknown: 3 };
   const byTier: BreakdownEntry[] = Object.entries(byTierMap)
     .map(([key, v]) => ({ key, ...v }))
     .sort((a, b) => (TIER_ORDER[a.key] ?? 4) - (TIER_ORDER[b.key] ?? 4));
 
-  // ── Pipeline Math Blueprint ──────────────────────────────────────────────────
-  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 3_200_000);
+  // ── Leads by Company Stage ────────────────────────────────────────────────────
+  const byStageMap: Record<string, { value: number; count: number }> = {};
+  for (const company of leadCompanies) {
+    const key = (company.companyStage as string) ?? "unknown";
+    if (!byStageMap[key]) byStageMap[key] = { value: 0, count: 0 };
+    byStageMap[key].count += 1;
+    byStageMap[key].value += company.deals
+      .filter((d) => (d.status as string) === "active" || (d.status as string) === "stalled")
+      .reduce((s, d) => s + Number(d.value ?? 0), 0);
+  }
+  const STAGE_ORDER_MAP: Record<string, number> = { unaware: 0, aware: 1, engaged: 2 };
+  const byStage: BreakdownEntry[] = Object.entries(byStageMap)
+    .map(([key, v]) => ({ key, ...v }))
+    .sort((a, b) => (STAGE_ORDER_MAP[a.key] ?? 9) - (STAGE_ORDER_MAP[b.key] ?? 9));
+
+  // ── Pipeline Math Blueprint (pre-computed for default display) ───────────────
+  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 3_320_386);
   const existingArr = Number(fiscalConfig?.existingArr ?? 1_200_000);
+  const expectedFromExisting = Number(fiscalConfig?.expectedFromExisting ?? existingArr);
   const fiscalYearEnd = fiscalConfig?.fiscalYearEnd
     ? new Date(fiscalConfig.fiscalYearEnd)
-    : new Date("2026-12-31");
-  const revenueGap = Math.max(0, revenueGoal - existingArr);
+    : new Date(`${year}-12-31`);
+  const revenueGap = Math.max(0, revenueGoal - expectedFromExisting);
 
-  // Avg deal size — only include deals with a value set
   const dealsWithValue = activeDeals.filter((d) => Number(d.value ?? 0) > 0);
   const avgDealSize =
     dealsWithValue.length > 0
@@ -152,7 +203,6 @@ export async function getLeadsData(): Promise<LeadsData> {
     const requiredValue = overallCloseRate > 0 ? revenueGap / overallCloseRate : 0;
     const requiredDeals = Math.ceil(requiredValue / avgDealSize);
 
-    // Days remaining in funnel from this stage onwards (including implementation buffer)
     const remainingDays =
       ACTIVE_STAGES.slice(i).reduce(
         (sum, s) => sum + (assumptionMap.get(s)?.avgDaysInStage ?? 0),
@@ -163,36 +213,39 @@ export async function getLeadsData(): Promise<LeadsData> {
     deadlineDate.setDate(deadlineDate.getDate() - remainingDays);
     const isOverdue = deadlineDate < today;
 
-    // Actual pipeline at this stage or later (cumulative)
     const laterStages = ACTIVE_STAGES.slice(i) as string[];
-    const actualDealsList = activeDeals.filter((d) =>
-      laterStages.includes(d.stage as string)
-    );
+    const actualDealsList = activeDeals.filter((d) => laterStages.includes(d.stage as string));
     const actualDeals = actualDealsList.length;
     const actualValue = actualDealsList.reduce((s, d) => s + Number(d.value ?? 0), 0);
 
     return {
-      stage,
-      deadline: deadlineDate.toISOString(),
-      isOverdue,
-      requiredDeals,
-      requiredValue,
-      actualDeals,
-      actualValue,
+      stage, deadline: deadlineDate.toISOString(), isOverdue,
+      requiredDeals, requiredValue, actualDeals, actualValue,
       delta: actualValue - requiredValue,
     };
   });
 
+  // Serialized for client component
+  const serializedAssumptions: SerializedAssumption[] = assumptions.map((a) => ({
+    stage: a.stage as string,
+    overallCloseRate: a.overallCloseRate,
+    conversionToNext: a.conversionToNext,
+    avgDaysInStage: a.avgDaysInStage,
+  }));
+
+  const activeDealsForBlueprint: BlueprintDeal[] = activeDeals.map((d) => ({
+    id: d.id,
+    value: d.value != null ? Number(d.value) : null,
+    stage: d.stage as string | null,
+  }));
+
   return {
-    totalLeads,
-    convertedToFirstConvo,
-    conversionRate,
-    avgDaysToFirstConvo,
-    bySource,
-    byTier,
-    blueprint,
-    revenueGoal,
-    revenueGap,
-    existingArr,
+    totalLeads, convertedToFirstConvo, conversionRate, avgDaysToFirstConvo,
+    bySource, byTier, byStage,
+    blueprint, assumptions: serializedAssumptions,
+    activeDealsForBlueprint, avgDealSize,
+    revenueGoal, revenueGap, existingArr,
+    fiscalYearEnd: fiscalYearEnd.toISOString(),
+    year,
   };
 }

@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import type { DealRow } from "@/components/ui/DealTable";
-import type { BreakdownEntry } from "@/lib/format";
 export type { BreakdownEntry } from "@/lib/format";
 
 export type DashboardData = {
