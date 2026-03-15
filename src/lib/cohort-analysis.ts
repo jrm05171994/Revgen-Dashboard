@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/prisma";
 
 const STAGE_ORDER: Record<string, number> = {
-  first_convo: 0, opp_qual: 1, stakeholder: 2, verbal: 3, contracting: 4, closed_won: 5,
+  first_convo: 0, opp_qual: 1, stakeholder: 2, verbal: 3, contracting: 4, closed_won: 5, lost: -1,
 };
 
 export type CohortRow = {
@@ -48,6 +48,10 @@ export async function getCohortAnalysis(
       include: { deals: true },
     }),
   ]);
+
+  if (manifestA.snapshotAt >= manifestB.snapshotAt) {
+    throw new Error("manifestIdA must be the earlier snapshot (snapshotAt A < snapshotAt B)");
+  }
 
   const cohortDeals = manifestA.deals.filter((d) => isActivePipeline(d.status));
   const bByDealId = new Map(manifestB.deals.map((d) => [d.dealId, d]));
