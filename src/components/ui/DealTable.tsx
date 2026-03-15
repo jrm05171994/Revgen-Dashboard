@@ -1,4 +1,4 @@
-import { formatCurrency, STAGE_LABELS, SOURCE_LABELS } from "@/lib/format";
+import { formatCurrency, SOURCE_LABELS } from "@/lib/format";
 import { StagePill } from "@/components/ui/StagePill";
 
 export type DealRow = {
