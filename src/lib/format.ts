@@ -56,3 +56,13 @@ export const DEAL_TYPE_LABELS: Record<string, string> = {
   lost_keep_warm: "Keep Warm",
   unknown:        "Unknown",
 };
+
+/** Shared type for bar chart breakdown data — used by pipeline-data and leads-data */
+export type BreakdownEntry = { key: string; value: number; count: number };
+
+export const TIER_LABELS: Record<string, string> = {
+  tier_1: "Tier 1",
+  tier_2: "Tier 2",
+  tier_3: "Tier 3",
+  unknown: "No Tier",
+};

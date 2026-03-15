@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { weightedForecast } from "@/lib/calculations";
 import type { DealRow } from "@/components/ui/DealTable";
 
-export type BreakdownEntry = { key: string; value: number; count: number };
+import type { BreakdownEntry } from "@/lib/format";
+export type { BreakdownEntry } from "@/lib/format";
 
 export type PipelineData = {
   // KPIs
