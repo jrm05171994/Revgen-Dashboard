@@ -5,6 +5,7 @@ export type DealRow = {
   id: string;
   name: string;
   companyName: string | null;
+  companyType: string | null;
   value: number | null;
   stage: string | null;
   source: string | null;

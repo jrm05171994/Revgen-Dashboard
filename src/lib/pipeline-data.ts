@@ -117,6 +117,7 @@ export async function getPipelineData(): Promise<PipelineData> {
     id: d.id,
     name: d.name,
     companyName: d.company?.name ?? null,
+    companyType: (d.company?.salesType as string) ?? null,
     value: d.value != null ? Number(d.value) : null,
     stage: d.stage as string | null,
     source: d.source as string | null,

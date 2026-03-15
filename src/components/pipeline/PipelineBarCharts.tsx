@@ -18,13 +18,18 @@ export function PipelineBarCharts({ data }: { data: PipelineData }) {
     key: string
   ) {
     let filtered: DealRow[];
-    if (dimension === "stage") filtered = data.activeDeals.filter((d) => d.stage === key);
-    else if (dimension === "source") filtered = data.activeDeals.filter((d) => d.source === key);
-    else if (dimension === "dealType") filtered = data.activeDeals.filter((d) => d.typeOfDeal === key);
-    else filtered = data.activeDeals; // companyType not on DealRow — show all
+    if (dimension === "stage")           filtered = data.activeDeals.filter((d) => d.stage === key);
+    else if (dimension === "source")      filtered = data.activeDeals.filter((d) => d.source === key);
+    else if (dimension === "dealType")    filtered = data.activeDeals.filter((d) => d.typeOfDeal === key);
+    else /* companyType */                filtered = data.activeDeals.filter((d) => d.companyType === key);
 
-    const labelMap = { stage: STAGE_LABELS, source: SOURCE_LABELS, dealType: DEAL_TYPE_LABELS };
-    const title = (labelMap[dimension as keyof typeof labelMap] ?? {})[key] ?? key;
+    const labelMap = {
+      stage: STAGE_LABELS,
+      source: SOURCE_LABELS,
+      dealType: DEAL_TYPE_LABELS,
+      companyType: SALES_TYPE_LABELS,
+    };
+    const title = labelMap[dimension][key] ?? key;
     setDrillDown({ title, deals: filtered });
   }
 
@@ -47,6 +52,7 @@ export function PipelineBarCharts({ data }: { data: PipelineData }) {
           title="By Company Type"
           data={data.byCompanyType}
           labelMap={SALES_TYPE_LABELS}
+          onBarClick={(k) => handleClick("companyType", k)}
         />
         <PipelineBarChart
           title="By Deal Type"
