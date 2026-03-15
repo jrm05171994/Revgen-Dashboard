@@ -4,7 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { formatCurrency } from "@/lib/format";
 import type { BreakdownEntry } from "@/lib/pipeline-data";
 
-const TEAL = "#34B3D4";
+// Cycle: navy → teal → coral → green (matches prototype ranking colors)
+const BAR_COLORS = ["#11327A", "#34B3D4", "#EE8363", "#4BAC64"];
 
 type TooltipProps = { active?: boolean; payload?: Array<{ payload: BreakdownEntry & { label: string } }> };
 
@@ -57,8 +58,8 @@ export function PipelineBarChart({ title, data, labelMap, onBarClick }: Props) {
             cursor={onBarClick ? "pointer" : "default"}
             onClick={(d: unknown) => onBarClick?.((d as BreakdownEntry).key)}
           >
-            {chartData.map((entry) => (
-              <Cell key={entry.key} fill={TEAL} />
+            {chartData.map((entry, i) => (
+              <Cell key={entry.key} fill={BAR_COLORS[i % BAR_COLORS.length]} />
             ))}
           </Bar>
         </BarChart>
