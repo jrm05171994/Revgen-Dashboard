@@ -86,10 +86,16 @@ async function buildDealSnapshot(
 }
 
 export async function generateSnapshotManifest(targetDate: Date): Promise<string> {
+  // Normalize to midnight UTC so timestamps from "2026-03-01" and "2026-03-01T15:30:00Z" both key to the same manifest
+  const normalizedDate = new Date(Date.UTC(
+    targetDate.getUTCFullYear(),
+    targetDate.getUTCMonth(),
+    targetDate.getUTCDate()
+  ));
+
   // Return existing manifest if one already exists for this date (idempotent)
-  const existing = await prisma.snapshotManifest.findFirst({
-    where: { snapshotAt: targetDate },
-    orderBy: { generatedAt: "desc" },
+  const existing = await prisma.snapshotManifest.findUnique({
+    where: { snapshotAt: normalizedDate },
   });
   if (existing) return existing.id;
 
@@ -103,7 +109,7 @@ export async function generateSnapshotManifest(targetDate: Date): Promise<string
       limit(() =>
         buildDealSnapshot(
           { id: d.id, name: d.name, companyId: d.companyId ?? null, value: d.value != null ? Number(d.value) : null },
-          targetDate
+          normalizedDate
         ).catch((err: unknown) => {
           console.error(`[attio-snapshot] Failed to snapshot deal ${d.id} (${d.name}):`, err);
           return {
@@ -121,7 +127,7 @@ export async function generateSnapshotManifest(targetDate: Date): Promise<string
 
   const manifest = await prisma.snapshotManifest.create({
     data: {
-      snapshotAt: targetDate,
+      snapshotAt: normalizedDate,
       dealCount: snapshots.length,
       deals: {
         create: snapshots.map((s) => ({
