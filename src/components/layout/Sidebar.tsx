@@ -28,7 +28,7 @@ interface SidebarProps {
 export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname();
   const visibleItems = NAV_ITEMS.filter((item) =>
-    item.roles.includes(userRole as never)
+    (item.roles as readonly string[]).includes(userRole)
   );
 
   return (
