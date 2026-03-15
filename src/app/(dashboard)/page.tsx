@@ -16,8 +16,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const comparisonDays = isNaN(raw) ? 30 : raw;
   const rawYear = parseInt(searchParams.year ?? "2026", 10);
   const year = isNaN(rawYear) ? 2026 : rawYear;
-  // TODO (Task 5): pass `year` as second arg once getDashboardData signature is updated
-  const data = await getDashboardData(comparisonDays);
+  const data = await getDashboardData(comparisonDays, year);
 
   return (
     <div>

@@ -1,32 +1,35 @@
 import { prisma } from "@/lib/prisma";
-import { weightedForecast } from "@/lib/calculations";
 import type { DealRow } from "@/components/ui/DealTable";
+import type { BreakdownEntry } from "@/lib/format";
+export type { BreakdownEntry } from "@/lib/format";
 
 export type DashboardData = {
   // KPIs
   pipelineTotal: number;
-  weightedForecast: number;
   activeDealCount: number;
   avgDealSize: number;
+  weightedForecast: number;
   pipelineCoverage: number;
   // Revenue
   revenueToDate: number;
-  combinedRevenue: number;
-  // Goal
+  expectedFromExisting: number;
+  bookedRevenue: number;
   revenueGoal: number;
   existingArr: number;
   revenueGap: number;
   pctOfGoal: number;
-  // Comparison deltas (null if no snapshot available for that date)
+  year: number;
+  // Deltas vs comparison snapshot
   pipelineTotalDelta: number | null;
   weightedForecastDelta: number | null;
-  // Deals
+  // Top deals
   topDeals: DealRow[];
 };
 
-export async function getDashboardData(comparisonDays: number): Promise<DashboardData> {
+export async function getDashboardData(comparisonDays: number, year: number): Promise<DashboardData> {
   const today = new Date();
-  const fiscalYearStart = new Date("2026-01-01");
+  const fiscalYearStart = new Date(`${year}-01-01`);
+  const fiscalYearEnd = new Date(`${year}-12-31T23:59:59`);
 
   const [deals, assumptions, fiscalConfig, actualRevSum] = await Promise.all([
     prisma.deal.findMany({
@@ -47,7 +50,7 @@ export async function getDashboardData(comparisonDays: number): Promise<Dashboar
       orderBy: { value: "desc" },
     }),
     prisma.stageAssumption.findMany(),
-    prisma.fiscalConfig.findFirst({ where: { fiscalYear: 2026 } }),
+    prisma.fiscalConfig.findFirst({ where: { fiscalYear: year } }),
     prisma.actualRevenueEntry.aggregate({
       _sum: { amount: true },
       where: {
@@ -56,69 +59,76 @@ export async function getDashboardData(comparisonDays: number): Promise<Dashboar
     }),
   ]);
 
+  // All active/stalled deals
   const activeDeals = deals.filter((d) => d.status === "active" || d.status === "stalled");
   const pipelineTotal = activeDeals.reduce((s, d) => s + Number(d.value ?? 0), 0);
   const activeDealCount = activeDeals.length;
   const avgDealSize = activeDealCount > 0 ? pipelineTotal / activeDealCount : 0;
 
-  // Pass status as "active" so weightedForecast includes stalled deals in forecast
-  const forecast = weightedForecast(
-    activeDeals.map((d) => ({ value: d.value, stage: d.stage, status: "active" as const })),
-    assumptions
-  );
+  // Weighted forecast (in-year only):
+  // Only deals where expectedClosedDate falls within the selected fiscal year.
+  // timingFactor = fraction of year remaining after close date (e.g., Aug close = ~5/12 months left)
+  const yearMs = fiscalYearEnd.getTime() - fiscalYearStart.getTime();
+  const rateMap = new Map(assumptions.map((a) => [a.stage as string, a.overallCloseRate]));
 
-  // Revenue to date (ActualRevenueEntry sum — 0 until CSV upload built)
+  const weightedForecast = activeDeals.reduce((sum, deal) => {
+    if (!deal.expectedClosedDate || !deal.stage || !deal.value) return sum;
+    const closeDate = new Date(deal.expectedClosedDate);
+    if (closeDate < fiscalYearStart || closeDate > fiscalYearEnd) return sum;
+    const closeRate = rateMap.get(deal.stage as string) ?? 0;
+    const remainingMs = Math.max(0, fiscalYearEnd.getTime() - closeDate.getTime());
+    const timingFactor = yearMs > 0 ? remainingMs / yearMs : 0;
+    return sum + Number(deal.value) * closeRate * timingFactor;
+  }, 0);
+
+  // Revenue
   const revenueToDate = Number(actualRevSum._sum.amount ?? 0);
-
-  // Projected revenue: closed-won deals this year × fraction of year remaining
-  const remainingYearFraction = Math.max(0, 1 - (today.getTime() - fiscalYearStart.getTime()) / (365 * 86400000));
-  const closedWonThisYear = deals.filter(
-    (d) => d.status === "won" && d.closedWonDate && new Date(d.closedWonDate) >= fiscalYearStart
-  );
-  const projectedRevenue = closedWonThisYear.reduce(
-    (s, d) => s + Number(d.value ?? 0) * remainingYearFraction,
-    0
-  );
-  const combinedRevenue = revenueToDate + projectedRevenue;
+  const expectedFromExisting = Number(fiscalConfig?.expectedFromExisting ?? 0);
+  const bookedRevenue = revenueToDate + expectedFromExisting;
 
   // Goal metrics
-  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 3_200_000);
+  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 3_320_386);
   const existingArr = Number(fiscalConfig?.existingArr ?? 1_200_000);
-  const revenueGap = Math.max(0, revenueGoal - existingArr - revenueToDate);
-  const pctOfGoal = revenueGoal > 0 ? combinedRevenue / revenueGoal : 0;
+  const revenueGap = Math.max(0, revenueGoal - bookedRevenue);
+  const pctOfGoal = revenueGoal > 0 ? bookedRevenue / revenueGoal : 0;
   const pipelineCoverage = revenueGap > 0 ? pipelineTotal / revenueGap : 0;
 
-  // Comparison snapshot (find the snapshot closest to today - comparisonDays)
+  // Comparison snapshot
   const compareDate = new Date(today);
-  compareDate.setDate(compareDate.getDate() - comparisonDays);
+  compareDate.setDate(compareDate.getDate() - (isNaN(comparisonDays) ? 30 : comparisonDays));
   const compSnap = await prisma.pipelineSnapshot.findFirst({
     where: { capturedAt: { lte: compareDate } },
     orderBy: { capturedAt: "desc" },
   });
   const pipelineTotalDelta = compSnap ? pipelineTotal - Number(compSnap.pipelineTotal) : null;
-  const weightedForecastDelta = compSnap ? forecast - Number(compSnap.weightedForecast) : null;
+  const weightedForecastDelta = compSnap ? weightedForecast - Number(compSnap.weightedForecast) : null;
 
-  // Top 5 active deals by value (already sorted desc)
-  const topDeals: DealRow[] = activeDeals.slice(0, 5).map((d) => ({
-    id: d.id,
-    name: d.name,
-    companyName: d.company?.name ?? null,
-    value: d.value != null ? Number(d.value) : null,
-    stage: d.stage as string | null,
-    source: d.source as string | null,
-    typeOfDeal: d.typeOfDeal as string | null,
-    status: d.status as string,
-    daysInStage: d.stageEnteredAt
-      ? Math.floor((today.getTime() - new Date(d.stageEnteredAt).getTime()) / 86400000)
-      : null,
-    firstConvoDate: d.firstConvoDate?.toISOString() ?? null,
-    expectedClosedDate: d.expectedClosedDate?.toISOString() ?? null,
-  }));
+  // Top 5 active deals with value > 0 (already sorted desc by value from DB)
+  const topDeals: DealRow[] = activeDeals
+    .filter((d) => Number(d.value ?? 0) > 0)
+    .slice(0, 5)
+    .map((d) => ({
+      id: d.id,
+      name: d.name,
+      companyName: d.company?.name ?? null,
+      companyType: null, // not needed for dashboard drill-downs; Task 7 adds this field to DealRow
+      value: Number(d.value),
+      stage: d.stage as string | null,
+      source: d.source as string | null,
+      typeOfDeal: d.typeOfDeal as string | null,
+      status: d.status as string,
+      daysInStage: d.stageEnteredAt
+        ? Math.floor((today.getTime() - new Date(d.stageEnteredAt).getTime()) / 86400000)
+        : null,
+      firstConvoDate: d.firstConvoDate?.toISOString() ?? null,
+      expectedClosedDate: d.expectedClosedDate?.toISOString() ?? null,
+    }));
 
   return {
-    pipelineTotal, weightedForecast: forecast, activeDealCount, avgDealSize, pipelineCoverage,
-    revenueToDate, combinedRevenue,
+    pipelineTotal, weightedForecast, activeDealCount, avgDealSize, pipelineCoverage,
+    revenueToDate, expectedFromExisting, bookedRevenue,
     revenueGoal, existingArr, revenueGap, pctOfGoal,
+    year,
     pipelineTotalDelta, weightedForecastDelta,
     topDeals,
   };
