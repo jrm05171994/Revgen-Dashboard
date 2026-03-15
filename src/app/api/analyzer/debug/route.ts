@@ -2,14 +2,46 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
-// Debug endpoint: GET /api/analyzer/debug?manifestId={id}
-// Returns snapshot summary and first 10 deal rows so we can verify Attio data is populating
+const ATTIO_BASE = "https://api.attio.com/v2";
+const ATTIO_KEY = process.env.ATTIO_API_KEY;
+
+// Debug endpoint:
+//   GET /api/analyzer/debug                         → list recent manifests
+//   GET /api/analyzer/debug?manifestId={id}         → stage breakdown + sample deals
+//   GET /api/analyzer/debug?attioDeaId={id}         → raw Attio record + stage history
+
 export async function GET(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const manifestId = searchParams.get("manifestId");
+  const attioDealId = searchParams.get("attioDealId");
+
+  // --- Attio raw inspection ---
+  if (attioDealId) {
+    if (!ATTIO_KEY) return NextResponse.json({ error: "ATTIO_API_KEY not set" }, { status: 500 });
+
+    // Fetch current record to see attribute slugs
+    const recordRes = await fetch(`${ATTIO_BASE}/objects/deals/records/${attioDealId}`, {
+      headers: { Authorization: `Bearer ${ATTIO_KEY}` },
+    });
+    const record = await recordRes.json();
+
+    // Try fetching stage history with common slug guesses
+    const slugsToTry = ["stage", "deal_stage", "pipeline_stage", "status"];
+    const histories: Record<string, unknown> = {};
+    for (const slug of slugsToTry) {
+      const res = await fetch(
+        `${ATTIO_BASE}/objects/deals/records/${attioDealId}/attributes/${slug}/values?show_historic=true`,
+        { headers: { Authorization: `Bearer ${ATTIO_KEY}` } }
+      );
+      histories[slug] = { status: res.status, body: await res.json() };
+    }
+
+    return NextResponse.json({ record, histories });
+  }
+
 
   if (!manifestId) {
     // List the 5 most recent manifests
