@@ -63,6 +63,8 @@ export type LeadsData = {
   revenueGoal: number;
   revenueGap: number;
   existingArr: number;
+  revenueToDate: number;
+  expectedFromExisting: number;
   fiscalYearEnd: string;
   year: number;
   companiesBySource: Record<string, LeadCompanyRow[]>;
@@ -78,7 +80,7 @@ const CONVERTED_STAGES: CompanyStage[] = ["opportunity", "customer", "evangelist
 export async function getLeadsData(year = 2026): Promise<LeadsData> {
   const today = new Date();
 
-  const [companies, activeDeals, assumptions, fiscalConfig] = await Promise.all([
+  const [companies, activeDeals, assumptions, fiscalConfig, actualRevSum] = await Promise.all([
     prisma.company.findMany({
       select: {
         id: true,
@@ -104,6 +106,12 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     }),
     prisma.stageAssumption.findMany(),
     prisma.fiscalConfig.findFirst({ where: { fiscalYear: year } }),
+    prisma.actualRevenueEntry.aggregate({
+      _sum: { amount: true },
+      where: {
+        periodStart: { gte: new Date(`${year}-01-01`), lt: today },
+      },
+    }),
   ]);
 
   // ── Leads KPIs ──────────────────────────────────────────────────────────────
@@ -198,10 +206,12 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
   const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 3_320_386);
   const existingArr = Number(fiscalConfig?.existingArr ?? 1_200_000);
   const expectedFromExisting = Number(fiscalConfig?.expectedFromExisting ?? existingArr);
+  const revenueToDate = Number(actualRevSum._sum.amount ?? 0);
   const fiscalYearEnd = fiscalConfig?.fiscalYearEnd
     ? new Date(fiscalConfig.fiscalYearEnd)
     : new Date(`${year}-12-31`);
-  const revenueGap = Math.max(0, revenueGoal - expectedFromExisting);
+  const bookedRevenue = revenueToDate + expectedFromExisting;
+  const revenueGap = Math.max(0, revenueGoal - bookedRevenue);
 
   const dealsWithValue = activeDeals.filter((d) => Number(d.value ?? 0) > 0);
   const avgDealSize =
@@ -292,7 +302,7 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     bySource, byTier, byStage,
     blueprint, assumptions: serializedAssumptions,
     activeDealsForBlueprint, avgDealSize,
-    revenueGoal, revenueGap, existingArr,
+    revenueGoal, revenueGap, existingArr, revenueToDate, expectedFromExisting,
     fiscalYearEnd: fiscalYearEnd.toISOString(),
     year,
     companiesBySource,

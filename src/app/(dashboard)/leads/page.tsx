@@ -42,6 +42,8 @@ export default async function LeadsPage({ searchParams }: Props) {
           revenueGoal={data.revenueGoal}
           revenueGap={data.revenueGap}
           existingArr={data.existingArr}
+          revenueToDate={data.revenueToDate}
+          expectedFromExisting={data.expectedFromExisting}
           fiscalYearEnd={data.fiscalYearEnd}
         />
       </div>

@@ -9,8 +9,9 @@ type Props = { data: DashboardData };
 export function RevenueGoalCard({ data }: Props) {
   const { goalOverride, bookedOverride, setGoalOverride, setBookedOverride, clearAll } = useScenario();
 
-  const displayGoal   = goalOverride   !== "" ? (parseFloat(goalOverride)   || data.revenueGoal)   : data.revenueGoal;
-  const displayBooked = bookedOverride !== "" ? (parseFloat(bookedOverride) || data.bookedRevenue)  : data.bookedRevenue;
+  const displayGoal    = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
+  const displayExpected = bookedOverride !== "" ? (parseFloat(bookedOverride) || data.expectedFromExisting) : data.expectedFromExisting;
+  const displayBooked   = data.revenueToDate + displayExpected;
   const displayGap    = Math.max(0, displayGoal - displayBooked);
   const displayPct    = displayGoal > 0 ? displayBooked / displayGoal : 0;
   const scenarioActive = goalOverride !== "" || bookedOverride !== "";
@@ -43,12 +44,12 @@ export function RevenueGoalCard({ data }: Props) {
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <label className="text-xs text-gray-400 whitespace-nowrap">Override Booked ($)</label>
+            <label className="text-xs text-gray-400 whitespace-nowrap">Expected from Existing ($)</label>
             <input
               type="number"
               value={bookedOverride}
               onChange={(e) => setBookedOverride(e.target.value)}
-              placeholder={String(Math.round(data.bookedRevenue))}
+              placeholder={String(Math.round(data.expectedFromExisting))}
               className="w-28 px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
             />
           </div>
@@ -71,16 +72,9 @@ export function RevenueGoalCard({ data }: Props) {
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Booked Revenue</p>
           <p className="text-base font-extrabold text-navy">{formatCurrency(displayBooked)}</p>
-          {bookedOverride === "" && (
-            <p className="text-[10px] text-gray-400 mt-0.5">
-              {formatCurrency(data.revenueToDate)} recognized
-              {" + "}
-              {formatCurrency(data.expectedFromExisting)} from existing
-            </p>
-          )}
-          {bookedOverride !== "" && (
-            <p className="text-[10px] text-amber-600 mt-0.5">override active</p>
-          )}
+          <p className="text-[10px] text-gray-400 mt-0.5">
+            {formatCurrency(data.revenueToDate)} recognized + {formatCurrency(displayExpected)} expected from existing
+          </p>
         </div>
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Revenue Gap</p>

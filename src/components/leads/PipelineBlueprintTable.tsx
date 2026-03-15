@@ -21,6 +21,8 @@ type Props = {
   revenueGoal: number;
   revenueGap: number;
   existingArr: number;
+  revenueToDate: number;
+  expectedFromExisting: number;
   fiscalYearEnd: string;
 };
 
@@ -69,7 +71,7 @@ function computeBlueprint(
 }
 
 function statusBadge(row: BlueprintRow): { label: string; className: string } {
-  if (row.delta >= 0) return { label: "On Track", className: "bg-green-100 text-green-700" };
+  if (row.delta >= 0) return { label: "On Track", className: "bg-emerald-100 text-emerald-700" };
   if (row.delta >= -row.requiredValue * 0.25)
     return { label: "Near", className: "bg-yellow-100 text-yellow-700" };
   return { label: "Gap", className: "bg-red-100 text-red-700" };
@@ -81,7 +83,9 @@ export function PipelineBlueprintTable({
   avgDealSize,
   revenueGoal,
   revenueGap: _revenueGap,  // eslint-disable-line @typescript-eslint/no-unused-vars
-  existingArr,
+  existingArr: _existingArr,  // eslint-disable-line @typescript-eslint/no-unused-vars
+  revenueToDate,
+  expectedFromExisting,
   fiscalYearEnd,
 }: Props) {
   const defaultEndDateStr = fiscalYearEnd.substring(0, 10);
@@ -92,11 +96,20 @@ export function PipelineBlueprintTable({
 
   const scenarioActive = goalOverride !== "" || bookedOverride !== "";
 
-  const scenarioGap = useMemo(() => {
-    const goal   = goalOverride   !== "" ? (parseFloat(goalOverride)   || revenueGoal) : revenueGoal;
-    const booked = bookedOverride !== "" ? (parseFloat(bookedOverride) || existingArr) : existingArr;
-    return Math.max(0, goal - booked);
-  }, [goalOverride, bookedOverride, revenueGoal, existingArr]);
+  const displayGoal = useMemo(
+    () => goalOverride !== "" ? (parseFloat(goalOverride) || revenueGoal) : revenueGoal,
+    [goalOverride, revenueGoal]
+  );
+
+  const scenarioBooked = useMemo(() => {
+    const displayExpected = bookedOverride !== "" ? (parseFloat(bookedOverride) || expectedFromExisting) : expectedFromExisting;
+    return revenueToDate + displayExpected;
+  }, [bookedOverride, revenueToDate, expectedFromExisting]);
+
+  const scenarioGap = useMemo(
+    () => Math.max(0, displayGoal - scenarioBooked),
+    [displayGoal, scenarioBooked]
+  );
 
   const endDate = useMemo(() => new Date(endDateStr + "T23:59:59"), [endDateStr]);
   const displayGap = gapOverride !== "" ? (parseFloat(gapOverride) || scenarioGap) : scenarioGap;
@@ -155,11 +168,11 @@ export function PipelineBlueprintTable({
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Revenue Goal</span>
-          <span className="text-base font-extrabold text-navy">{formatCurrency(revenueGoal)}</span>
+          <span className="text-base font-extrabold text-navy">{formatCurrency(displayGoal)}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Existing ARR</span>
-          <span className="text-base font-extrabold text-navy">{formatCurrency(existingArr)}</span>
+          <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Booked Revenue</span>
+          <span className="text-base font-extrabold text-navy">{formatCurrency(scenarioBooked)}</span>
         </div>
         {(endDateStr !== defaultEndDateStr || gapOverride !== "" || scenarioActive) && (
           <button
@@ -201,7 +214,7 @@ export function PipelineBlueprintTable({
                   <td className="py-3 pr-4 text-right text-gray-600">{formatCurrency(row.requiredValue)}</td>
                   <td className="py-3 pr-4 text-right font-medium text-navy">{row.actualDeals}</td>
                   <td className="py-3 pr-4 text-right font-medium text-navy">{formatCurrency(row.actualValue)}</td>
-                  <td className={`py-3 pr-4 text-right font-medium ${row.delta >= 0 ? "text-green-600" : "text-coral"}`}>
+                  <td className={`py-3 pr-4 text-right font-medium ${row.delta >= 0 ? "text-emerald-600" : "text-coral"}`}>
                     {row.delta >= 0 ? "+" : ""}{formatCurrency(row.delta)}
                   </td>
                   <td className="py-3">
