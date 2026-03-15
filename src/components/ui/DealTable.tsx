@@ -1,4 +1,4 @@
-import { formatCurrency, SOURCE_LABELS } from "@/lib/format";
+import { formatCurrency, SOURCE_LABELS, DEAL_TYPE_LABELS } from "@/lib/format";
 import { StagePill } from "@/components/ui/StagePill";
 
 export type DealRow = {
@@ -64,7 +64,7 @@ export function DealTable({ deals, onRowClick, compact = false }: Props) {
               )}
               {!compact && (
                 <td className="py-2.5 pr-4 text-gray-500">
-                  {deal.typeOfDeal ?? "—"}
+                  {deal.typeOfDeal ? (DEAL_TYPE_LABELS[deal.typeOfDeal] ?? deal.typeOfDeal) : "—"}
                 </td>
               )}
               <td className="py-2.5">

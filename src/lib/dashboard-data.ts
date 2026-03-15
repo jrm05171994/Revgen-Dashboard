@@ -11,7 +11,6 @@ export type DashboardData = {
   pipelineCoverage: number;
   // Revenue
   revenueToDate: number;
-  projectedRevenue: number;
   combinedRevenue: number;
   // Goal
   revenueGoal: number;
@@ -118,7 +117,7 @@ export async function getDashboardData(comparisonDays: number): Promise<Dashboar
 
   return {
     pipelineTotal, weightedForecast: forecast, activeDealCount, avgDealSize, pipelineCoverage,
-    revenueToDate, projectedRevenue, combinedRevenue,
+    revenueToDate, combinedRevenue,
     revenueGoal, existingArr, revenueGap, pctOfGoal,
     pipelineTotalDelta, weightedForecastDelta,
     topDeals,

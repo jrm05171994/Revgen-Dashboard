@@ -11,7 +11,8 @@ type Props = {
 };
 
 export default async function DashboardPage({ searchParams }: Props) {
-  const comparisonDays = parseInt(searchParams.compare ?? "30", 10);
+  const raw = parseInt(searchParams.compare ?? "30", 10);
+  const comparisonDays = isNaN(raw) ? 30 : raw;
   const data = await getDashboardData(comparisonDays);
 
   return (

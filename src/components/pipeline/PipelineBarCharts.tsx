@@ -47,7 +47,6 @@ export function PipelineBarCharts({ data }: { data: PipelineData }) {
           title="By Company Type"
           data={data.byCompanyType}
           labelMap={SALES_TYPE_LABELS}
-          onBarClick={(k) => handleClick("companyType", k)}
         />
         <PipelineBarChart
           title="By Deal Type"
