@@ -15,9 +15,12 @@ const STAGE_MAP: Record<string, string> = {
 };
 
 type HistoricEntry = {
-  value: { status?: { title: string } | null; option?: { title: string } | null } | null;
   active_from: string | null;
   active_until: string | null;
+  // status-type attributes return a top-level "status" object (not wrapped in "value")
+  status?: { title: string } | null;
+  // select-type attributes return a top-level "option" object
+  option?: { title: string } | null;
 };
 
 async function fetchHistoricAttribute(
@@ -54,8 +57,8 @@ function valueAtDate(entries: HistoricEntry[], targetDate: Date): HistoricEntry 
 }
 
 function extractTitle(entry: HistoricEntry | null): string | null {
-  if (!entry?.value) return null;
-  return entry.value.status?.title ?? entry.value.option?.title ?? null;
+  if (!entry) return null;
+  return entry.status?.title ?? entry.option?.title ?? null;
 }
 
 export type DealSnapshotInput = {

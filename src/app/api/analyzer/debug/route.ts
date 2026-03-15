@@ -94,3 +94,12 @@ export async function GET(req: Request) {
     })),
   });
 }
+
+// DELETE /api/analyzer/debug — wipe all snapshot manifests (and cascade DealSnapshots)
+export async function DELETE(req: Request) {
+  const session = await auth();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const deleted = await prisma.snapshotManifest.deleteMany({});
+  return NextResponse.json({ deleted: deleted.count });
+}
