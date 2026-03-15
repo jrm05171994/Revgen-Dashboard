@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { generateSnapshotManifest } from "@/lib/attio-snapshot";
-import { Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -32,29 +30,10 @@ export async function POST(req: Request) {
     const manifestId = await generateSnapshotManifest(targetDate);
     return NextResponse.json({ manifestId });
   } catch (err) {
-    // Handle race condition: concurrent request already created this manifest
-    if (
-      err instanceof Prisma.PrismaClientKnownRequestError &&
-      err.code === "P2002"
-    ) {
-      const normalizedDate = new Date(
-        Date.UTC(
-          targetDate.getUTCFullYear(),
-          targetDate.getUTCMonth(),
-          targetDate.getUTCDate()
-        )
-      );
-
-      const existing = await prisma.snapshotManifest.findUnique({
-        where: { snapshotAt: normalizedDate },
-      });
-
-      if (existing) {
-        return NextResponse.json({ manifestId: existing.id });
-      }
-    }
-
-    console.error("[analyzer/snapshot]", err);
-    throw err;
+    console.error("[analyzer/snapshot] Error generating snapshot:", err);
+    return NextResponse.json(
+      { error: "Failed to generate snapshot" },
+      { status: 500 }
+    );
   }
 }
