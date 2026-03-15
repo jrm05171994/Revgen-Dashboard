@@ -31,7 +31,7 @@ export async function GET(req: Request) {
     });
   }
 
-  const manifest = await prisma.snapshotManifest.findUnique({
+  const manifest = await prisma.snapshotManifest.findFirst({
     where: { id: manifestId },
     include: {
       deals: { take: 10, orderBy: { dealId: "asc" } },
