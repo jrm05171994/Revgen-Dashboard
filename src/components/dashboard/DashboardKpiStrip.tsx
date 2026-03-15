@@ -26,8 +26,8 @@ export function DashboardKpiStrip({ data }: { data: DashboardData }) {
         delta={forecastDelta}
       />
       <KpiCard
-        label="Revenue to Date"
-        value={formatCurrency(data.combinedRevenue)}
+        label="Booked Revenue"
+        value={formatCurrency(data.bookedRevenue)}
         subValue={`${formatCurrency(data.revenueToDate)} recognized`}
       />
       <KpiCard
