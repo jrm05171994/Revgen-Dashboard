@@ -11,9 +11,16 @@ export default async function DashboardLayout({
   if (!session) redirect("/login");
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar userRole={session.user.role ?? "REVGEN"} />
-      <main className="flex-1 overflow-auto">{children}</main>
+      {/*
+        ml-[54px] matches collapsed sidebar width.
+        peer-hover:ml-[220px] expands when sidebar is hovered.
+        The `peer` class on <aside> in Sidebar.tsx triggers this via CSS sibling selector.
+      */}
+      <main className="ml-[54px] peer-hover:ml-[220px] transition-[margin-left] duration-[220ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-h-screen overflow-auto">
+        {children}
+      </main>
     </div>
   );
 }

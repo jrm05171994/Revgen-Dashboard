@@ -13,12 +13,12 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/",          label: "Dashboard",    icon: LayoutDashboard, roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
-  { href: "/pipeline",  label: "Pipeline",     icon: GitBranch,       roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
-  { href: "/leads",     label: "Leads",        icon: Users,           roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
-  { href: "/analyzer",  label: "Analyzer",     icon: BarChart2,       roles: ["FINANCE", "LEADERSHIP"] },
-  { href: "/sources",   label: "Data Sources", icon: Database,        roles: ["FINANCE"] },
-  { href: "/settings",  label: "Settings",     icon: Settings,        roles: ["FINANCE"] },
+  { href: "/",         label: "Dashboard",    icon: LayoutDashboard, roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
+  { href: "/pipeline", label: "Pipeline",     icon: GitBranch,       roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
+  { href: "/leads",    label: "Leads",        icon: Users,           roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
+  { href: "/analyzer", label: "Analyzer",     icon: BarChart2,       roles: ["FINANCE", "LEADERSHIP"] },
+  { href: "/sources",  label: "Data Sources", icon: Database,        roles: ["FINANCE"] },
+  { href: "/settings", label: "Settings",     icon: Settings,        roles: ["FINANCE"] },
 ] as const;
 
 interface SidebarProps {
@@ -27,23 +27,30 @@ interface SidebarProps {
 
 export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname();
-
   const visibleItems = NAV_ITEMS.filter((item) =>
     item.roles.includes(userRole as never)
   );
 
   return (
-    <aside className="w-56 min-h-screen bg-navy flex flex-col">
+    <aside
+      className="peer group fixed top-0 left-0 z-50 flex flex-col min-h-screen
+                 w-[54px] hover:w-[220px]
+                 transition-[width] duration-[220ms] ease-[cubic-bezier(0.4,0,0.2,1)]
+                 bg-navy overflow-hidden"
+    >
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/10">
-        <span className="text-white font-bold text-lg tracking-tight">
-          Koda RevGen
-        </span>
-        <p className="text-white/50 text-xs mt-0.5">Pipeline Intelligence</p>
+      <div className="flex items-center gap-2.5 px-3 py-[17px] border-b border-white/10 min-h-[63px] flex-shrink-0">
+        <div className="w-7 min-w-[28px] h-7 rounded-md bg-teal flex items-center justify-center text-white font-extrabold text-[10px] flex-shrink-0 tracking-tight">
+          KH
+        </div>
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-[50ms] overflow-hidden whitespace-nowrap">
+          <p className="text-white font-bold text-[13px] tracking-tight leading-none">Koda Health</p>
+          <p className="text-white/40 text-[9px] uppercase tracking-widest mt-0.5">Revenue Intel</p>
+        </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex-1 px-1.5 py-2 flex flex-col gap-px overflow-hidden">
         {visibleItems.map(({ href, label, icon: Icon }) => {
           const isActive =
             href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -53,18 +60,36 @@ export function Sidebar({ userRole }: SidebarProps) {
               href={href}
               aria-current={isActive ? "page" : undefined}
               className={clsx(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition",
+                "flex items-center gap-2.5 px-[7px] py-[5px] rounded-md transition-colors duration-100 whitespace-nowrap",
                 isActive
-                  ? "bg-white/15 text-white"
-                  : "text-white/60 hover:text-white hover:bg-white/10"
+                  ? "bg-teal/20 text-white"
+                  : "text-white/70 hover:text-white hover:bg-white/8"
               )}
             >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
+              <div className={clsx(
+                "w-[22px] min-w-[22px] h-[22px] rounded-[5px] flex items-center justify-center flex-shrink-0",
+                isActive ? "bg-teal/30" : "bg-white/8"
+              )}>
+                <Icon className={clsx("w-3.5 h-3.5", isActive ? "text-teal" : "text-white/70")} />
+              </div>
+              <span className={clsx(
+                "text-[12px] font-medium overflow-hidden",
+                "opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-[50ms]",
+                isActive && "text-white font-semibold"
+              )}>
+                {label}
+              </span>
             </Link>
           );
         })}
       </nav>
+
+      {/* Footer */}
+      <div className="px-1.5 py-2 border-t border-white/8 flex-shrink-0">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 delay-[50ms] px-2 pb-1">
+          <p className="text-[10px] text-white/30 whitespace-nowrap">Pipeline Intelligence</p>
+        </div>
+      </div>
     </aside>
   );
 }
