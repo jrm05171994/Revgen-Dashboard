@@ -96,7 +96,7 @@ export async function GET(req: Request) {
 }
 
 // DELETE /api/analyzer/debug — wipe all snapshot manifests (and cascade DealSnapshots)
-export async function DELETE(req: Request) {
+export async function DELETE(_req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
