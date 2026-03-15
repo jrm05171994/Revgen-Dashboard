@@ -3,9 +3,8 @@ import { TopBar } from "@/components/layout/TopBar";
 import { YearSelector } from "@/components/dashboard/YearSelector";
 import { LeadsKpiStrip } from "@/components/leads/LeadsKpiStrip";
 import { PipelineBlueprintTable } from "@/components/leads/PipelineBlueprintTable";
-import { PipelineBarChart } from "@/components/pipeline/PipelineBarChart";
+import { LeadsChartsSection } from "@/components/leads/LeadsChartsSection";
 import { getLeadsData } from "@/lib/leads-data";
-import { SOURCE_LABELS, TIER_LABELS, COMPANY_STAGE_LABELS } from "@/lib/format";
 
 type Props = {
   searchParams: { year?: string };
@@ -28,22 +27,13 @@ export default async function LeadsPage({ searchParams }: Props) {
       />
       <div className="p-6 space-y-6">
         <LeadsKpiStrip data={data} />
-        <div className="grid grid-cols-2 gap-4">
-          <PipelineBarChart
-            title="Leads by Source"
-            data={data.bySource}
-            labelMap={SOURCE_LABELS}
-          />
-          <PipelineBarChart
-            title="Leads by ICP Tier"
-            data={data.byTier}
-            labelMap={TIER_LABELS}
-          />
-        </div>
-        <PipelineBarChart
-          title="Leads by Stage"
-          data={data.byStage}
-          labelMap={COMPANY_STAGE_LABELS}
+        <LeadsChartsSection
+          bySource={data.bySource}
+          byTier={data.byTier}
+          byStage={data.byStage}
+          companiesBySource={data.companiesBySource}
+          companiesByTier={data.companiesByTier}
+          companiesByStage={data.companiesByStage}
         />
         <PipelineBlueprintTable
           assumptions={data.assumptions}

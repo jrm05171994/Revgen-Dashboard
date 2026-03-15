@@ -80,7 +80,7 @@ export function PipelineBlueprintTable({
   activeDeals,
   avgDealSize,
   revenueGoal,
-  revenueGap: serverRevenueGap,
+  revenueGap: _revenueGap,  // eslint-disable-line @typescript-eslint/no-unused-vars
   existingArr,
   fiscalYearEnd,
 }: Props) {

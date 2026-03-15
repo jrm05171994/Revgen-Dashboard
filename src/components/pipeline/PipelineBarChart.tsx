@@ -15,8 +15,8 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   return (
     <div className="bg-white border border-gray-100 shadow-lg rounded-lg px-3 py-2 text-sm">
       <p className="font-semibold text-navy mb-1">{d.label}</p>
-      <p className="text-teal font-medium">{formatCurrency(d.value)}</p>
-      <p className="text-gray-500">{d.count} deal{d.count !== 1 ? "s" : ""}</p>
+      <p className="text-teal font-medium">{d.count} lead{d.count !== 1 ? "s" : ""}</p>
+      <p className="text-gray-500 text-xs">{formatCurrency(d.value)} pipeline</p>
     </div>
   );
 }
@@ -26,9 +26,10 @@ type Props = {
   data: BreakdownEntry[];
   labelMap?: Record<string, string>;
   onBarClick?: (key: string) => void;
+  metric?: "value" | "count";
 };
 
-export function PipelineBarChart({ title, data, labelMap, onBarClick }: Props) {
+export function PipelineBarChart({ title, data, labelMap, onBarClick, metric = "value" }: Props) {
   const chartData = data.map((d) => ({ ...d, label: labelMap?.[d.key] ?? d.key }));
 
   return (
@@ -45,7 +46,7 @@ export function PipelineBarChart({ title, data, labelMap, onBarClick }: Props) {
             tickLine={false}
           />
           <YAxis
-            tickFormatter={(v: number) => formatCurrency(v)}
+            tickFormatter={metric === "count" ? (v: number) => String(v) : (v: number) => formatCurrency(v)}
             tick={{ fontSize: 11, fill: "#5D6265" }}
             axisLine={false}
             tickLine={false}
@@ -53,7 +54,7 @@ export function PipelineBarChart({ title, data, labelMap, onBarClick }: Props) {
           />
           <Tooltip content={<CustomTooltip />} />
           <Bar
-            dataKey="value"
+            dataKey={metric}
             radius={[4, 4, 0, 0]}
             cursor={onBarClick ? "pointer" : "default"}
             onClick={(d: unknown) => onBarClick?.((d as BreakdownEntry).key)}

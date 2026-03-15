@@ -38,6 +38,16 @@ export type BlueprintDeal = {
   stage: string | null;
 };
 
+export type LeadCompanyRow = {
+  id: string;
+  name: string | null;
+  icpTier: number | null;
+  companyStage: string | null;
+  primarySource: string | null;
+  dealCount: number;
+  activePipelineValue: number;
+};
+
 export type LeadsData = {
   totalLeads: number;
   convertedToFirstConvo: number;
@@ -55,6 +65,9 @@ export type LeadsData = {
   existingArr: number;
   fiscalYearEnd: string;
   year: number;
+  companiesBySource: Record<string, LeadCompanyRow[]>;
+  companiesByTier: Record<string, LeadCompanyRow[]>;
+  companiesByStage: Record<string, LeadCompanyRow[]>;
 };
 
 // Stages that classify as "leads" (not yet in the pipeline)
@@ -69,6 +82,7 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     prisma.company.findMany({
       select: {
         id: true,
+        name: true,
         icpTier: true,
         companyStage: true,
         attioCreatedAt: true,
@@ -225,6 +239,40 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     };
   });
 
+  // ── Company drill-down lookup maps ──────────────────────────────────────────
+  const buildCompanyRow = (company: typeof leadCompanies[number]): LeadCompanyRow => {
+    const primarySource = company.deals[0]?.source as string | null ?? null;
+    const activePipelineValue = company.deals
+      .filter((d) => (d.status as string) === "active" || (d.status as string) === "stalled")
+      .reduce((s, d) => s + Number(d.value ?? 0), 0);
+    return {
+      id: company.id,
+      name: company.name ?? null,
+      icpTier: company.icpTier,
+      companyStage: company.companyStage as string | null,
+      primarySource,
+      dealCount: company.deals.length,
+      activePipelineValue,
+    };
+  };
+
+  const companiesBySource: Record<string, LeadCompanyRow[]> = {};
+  const companiesByTier:   Record<string, LeadCompanyRow[]> = {};
+  const companiesByStage:  Record<string, LeadCompanyRow[]> = {};
+
+  for (const company of leadCompanies) {
+    const row = buildCompanyRow(company);
+    const sourceKey = (company.deals[0]?.source as string) ?? "unknown";
+    if (!companiesBySource[sourceKey]) companiesBySource[sourceKey] = [];
+    companiesBySource[sourceKey].push(row);
+    const tierKey = company.icpTier != null ? `tier_${company.icpTier}` : "unknown";
+    if (!companiesByTier[tierKey]) companiesByTier[tierKey] = [];
+    companiesByTier[tierKey].push(row);
+    const stageKey = (company.companyStage as string) ?? "unknown";
+    if (!companiesByStage[stageKey]) companiesByStage[stageKey] = [];
+    companiesByStage[stageKey].push(row);
+  }
+
   // Serialized for client component
   const serializedAssumptions: SerializedAssumption[] = assumptions.map((a) => ({
     stage: a.stage as string,
@@ -247,5 +295,8 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     revenueGoal, revenueGap, existingArr,
     fiscalYearEnd: fiscalYearEnd.toISOString(),
     year,
+    companiesBySource,
+    companiesByTier,
+    companiesByStage,
   };
 }
