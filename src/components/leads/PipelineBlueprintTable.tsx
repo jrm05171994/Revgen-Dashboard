@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { formatCurrency, STAGE_LABELS } from "@/lib/format";
 import type { BlueprintRow, SerializedAssumption, BlueprintDeal } from "@/lib/leads-data";
+import { useScenario } from "@/lib/use-scenario";
 
 const ACTIVE_STAGES = [
   "first_convo",
@@ -87,8 +88,18 @@ export function PipelineBlueprintTable({
   const [endDateStr, setEndDateStr]   = useState(defaultEndDateStr);
   const [gapOverride, setGapOverride] = useState<string>("");
 
+  const { goalOverride, bookedOverride } = useScenario();
+
+  const scenarioActive = goalOverride !== "" || bookedOverride !== "";
+
+  const scenarioGap = useMemo(() => {
+    const goal   = goalOverride   !== "" ? (parseFloat(goalOverride)   || revenueGoal) : revenueGoal;
+    const booked = bookedOverride !== "" ? (parseFloat(bookedOverride) || existingArr) : existingArr;
+    return Math.max(0, goal - booked);
+  }, [goalOverride, bookedOverride, revenueGoal, existingArr]);
+
   const endDate = useMemo(() => new Date(endDateStr + "T23:59:59"), [endDateStr]);
-  const displayGap = gapOverride !== "" ? (parseFloat(gapOverride) || serverRevenueGap) : serverRevenueGap;
+  const displayGap = gapOverride !== "" ? (parseFloat(gapOverride) || scenarioGap) : scenarioGap;
 
   const blueprint = useMemo(
     () => computeBlueprint(assumptions, activeDeals, displayGap, avgDealSize, endDate),
@@ -98,9 +109,16 @@ export function PipelineBlueprintTable({
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-          Pipeline Math Blueprint
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Pipeline Math Blueprint
+          </h2>
+          {scenarioActive && (
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 uppercase tracking-wide">
+              Scenario
+            </span>
+          )}
+        </div>
       </div>
       <p className="text-xs text-gray-400 mb-4">
         Adjust the target close date and revenue gap to model different scenarios.
@@ -127,7 +145,7 @@ export function PipelineBlueprintTable({
             type="number"
             value={gapOverride}
             onChange={(e) => setGapOverride(e.target.value)}
-            placeholder={String(Math.round(serverRevenueGap))}
+            placeholder={String(Math.round(scenarioGap))}
             className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
           />
         </div>
@@ -143,7 +161,7 @@ export function PipelineBlueprintTable({
           <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Existing ARR</span>
           <span className="text-base font-extrabold text-navy">{formatCurrency(existingArr)}</span>
         </div>
-        {(endDateStr !== defaultEndDateStr || gapOverride !== "") && (
+        {(endDateStr !== defaultEndDateStr || gapOverride !== "" || scenarioActive) && (
           <button
             onClick={() => { setEndDateStr(defaultEndDateStr); setGapOverride(""); }}
             className="text-xs text-gray-400 hover:text-navy transition-colors mt-4"
