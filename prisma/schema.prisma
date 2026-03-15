@@ -253,11 +253,12 @@ model StageAssumption {
 // ─── Fiscal Config ────────────────────────────────────────────────────────────
 
 model FiscalConfig {
-  fiscalYear      Int      @id
-  revenueGoal     Decimal  @db.Decimal(12, 2)
-  existingArr     Decimal  @db.Decimal(12, 2)
-  fiscalYearStart DateTime
-  fiscalYearEnd   DateTime
+  fiscalYear           Int      @id
+  revenueGoal          Decimal  @db.Decimal(12, 2)
+  existingArr          Decimal  @db.Decimal(12, 2)
+  expectedFromExisting Decimal  @db.Decimal(12, 2)
+  fiscalYearStart      DateTime
+  fiscalYearEnd        DateTime
 }
 
 // ─── Audit Log ────────────────────────────────────────────────────────────────
