@@ -7,14 +7,14 @@ type UserRow = {
   id: string;
   name: string | null;
   email: string;
-  role: "FINANCE" | "LEADERSHIP" | "REVGEN";
+  role: "FINANCE" | "LEADERSHIP" | "REVGEN" | "OTHER";
   createdAt: string;
 };
 
 type InviteRow = {
   id: string;
   email: string;
-  role: "FINANCE" | "LEADERSHIP" | "REVGEN";
+  role: "FINANCE" | "LEADERSHIP" | "REVGEN" | "OTHER";
   invitedBy: string;
   createdAt: string;
   usedAt: string | null;
@@ -30,12 +30,14 @@ const ROLE_LABELS: Record<string, string> = {
   FINANCE: "Finance",
   LEADERSHIP: "Leadership",
   REVGEN: "RevGen",
+  OTHER: "Other",
 };
 
 const ROLE_COLORS: Record<string, string> = {
   FINANCE:    "bg-navy/10 text-navy",
   LEADERSHIP: "bg-purple-100 text-purple-700",
   REVGEN:     "bg-teal/10 text-teal",
+  OTHER:      "bg-gray-100 text-gray-600",
 };
 
 export function UserManagementSection({ currentUserId, initialUsers, initialInvites }: Props) {
@@ -45,7 +47,7 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
   const [roleError, setRoleError] = useState<string | null>(null);
 
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"FINANCE" | "LEADERSHIP" | "REVGEN">("REVGEN");
+  const [inviteRole, setInviteRole] = useState<"FINANCE" | "LEADERSHIP" | "REVGEN" | "OTHER">("REVGEN");
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<string | null>(null);
 
@@ -133,6 +135,7 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
                       <option value="FINANCE">Finance</option>
                       <option value="LEADERSHIP">Leadership</option>
                       <option value="REVGEN">RevGen</option>
+                      <option value="OTHER">Other</option>
                     </select>
                   )}
                   {saving === user.id && (
@@ -178,6 +181,7 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
               <option value="REVGEN">RevGen</option>
               <option value="LEADERSHIP">Leadership</option>
               <option value="FINANCE">Finance</option>
+              <option value="OTHER">Other</option>
             </select>
           </div>
           <button

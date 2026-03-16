@@ -58,6 +58,7 @@ enum UserRole {
   FINANCE
   LEADERSHIP
   REVGEN
+  OTHER
 }
 
 model User {

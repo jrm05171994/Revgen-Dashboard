@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { UserRole } from "@prisma/client";
 
-const VALID_ROLES: UserRole[] = ["FINANCE", "LEADERSHIP", "REVGEN"];
+const VALID_ROLES: UserRole[] = ["FINANCE", "LEADERSHIP", "REVGEN", "OTHER"];
 
 export async function PATCH(
   req: Request,
