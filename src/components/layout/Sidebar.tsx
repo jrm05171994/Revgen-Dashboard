@@ -13,10 +13,10 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/",         label: "Dashboard",    icon: LayoutDashboard, roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
-  { href: "/pipeline", label: "Pipeline",     icon: GitBranch,       roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
-  { href: "/leads",    label: "Leads",        icon: Users,           roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
-  { href: "/analyzer", label: "Analyzer",     icon: BarChart2,       roles: ["FINANCE", "LEADERSHIP"] },
+  { href: "/",         label: "Dashboard",    icon: LayoutDashboard, roles: ["FINANCE", "LEADERSHIP", "REVGEN", "OTHER"] },
+  { href: "/pipeline", label: "Pipeline",     icon: GitBranch,       roles: ["FINANCE", "LEADERSHIP", "REVGEN", "OTHER"] },
+  { href: "/leads",    label: "Leads",        icon: Users,           roles: ["FINANCE", "LEADERSHIP", "REVGEN", "OTHER"] },
+  { href: "/analyzer", label: "Analyzer",     icon: BarChart2,       roles: ["FINANCE", "LEADERSHIP", "REVGEN"] },
   { href: "/sources",  label: "Data Sources", icon: Database,        roles: ["FINANCE"] },
   { href: "/settings", label: "Settings",     icon: Settings,        roles: ["FINANCE"] },
 ] as const;
