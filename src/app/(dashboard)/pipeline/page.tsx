@@ -7,8 +7,8 @@ export default async function PipelinePage() {
 
   return (
     <div>
-      <TopBar title="Pipeline" />
-      <div className="p-6">
+      <TopBar title="Pipeline" exportId="export-content" />
+      <div id="export-content" className="p-6">
         <PipelineClientSection data={data} />
       </div>
     </div>

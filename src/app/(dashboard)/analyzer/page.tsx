@@ -4,8 +4,8 @@ import { AnalyzerClientSection } from "@/components/analyzer/AnalyzerClientSecti
 export default function AnalyzerPage() {
   return (
     <div>
-      <TopBar title="Analyzer" />
-      <div className="p-6">
+      <TopBar title="Analyzer" exportId="export-content" />
+      <div id="export-content" className="p-6">
         <AnalyzerClientSection />
       </div>
     </div>

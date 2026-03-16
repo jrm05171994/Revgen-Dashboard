@@ -30,6 +30,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       )}
       <TopBar
         title="Dashboard"
+        exportId="export-content"
         action={
           <Suspense>
             <div className="flex items-center gap-2">
@@ -39,7 +40,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </Suspense>
         }
       />
-      <div className="p-6 space-y-6">
+      <div id="export-content" className="p-6 space-y-6">
         <DashboardKpiStrip data={data} />
         <RevenueGoalCard data={data} />
         <TopDealsSection deals={data.topDeals} />

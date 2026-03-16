@@ -1,12 +1,15 @@
 "use client";
 
+import { useRef } from "react";
 import { useScenario } from "@/lib/use-scenario";
 import { formatCurrency, formatPct } from "@/lib/format";
+import { ExportButton } from "@/components/ui/ExportButton";
 import type { DashboardData } from "@/lib/dashboard-data";
 
 type Props = { data: DashboardData };
 
 export function RevenueGoalCard({ data }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
   const { goalOverride, bookedOverride, setGoalOverride, setBookedOverride, clearAll } = useScenario();
 
   const displayGoal    = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
@@ -17,7 +20,7 @@ export function RevenueGoalCard({ data }: Props) {
   const scenarioActive = goalOverride !== "" || bookedOverride !== "";
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div ref={cardRef} className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-2">
           <div>
@@ -33,6 +36,7 @@ export function RevenueGoalCard({ data }: Props) {
           )}
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
+          <ExportButton getElement={() => cardRef.current} filename="revenue-goal" variant="icon" />
           <div className="flex items-center gap-1.5">
             <label className="text-xs text-gray-400 whitespace-nowrap">Override Goal ($)</label>
             <input

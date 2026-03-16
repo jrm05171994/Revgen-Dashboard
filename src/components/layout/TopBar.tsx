@@ -1,11 +1,13 @@
 import { auth, signOut } from "@/lib/auth";
+import { ExportButton } from "@/components/ui/ExportButton";
 
 interface TopBarProps {
   title: string;
   action?: React.ReactNode;
+  exportId?: string;
 }
 
-export async function TopBar({ title, action }: TopBarProps) {
+export async function TopBar({ title, action, exportId }: TopBarProps) {
   const session = await auth();
 
   return (
@@ -16,6 +18,13 @@ export async function TopBar({ title, action }: TopBarProps) {
       </div>
 
       <div className="flex items-center gap-4">
+        {exportId && (
+          <ExportButton
+            getElement={() => document.getElementById(exportId!)}
+            filename={title.toLowerCase().replace(/\s+/g, "-")}
+            variant="button"
+          />
+        )}
         <span className="text-sm text-gray-500">{session?.user?.name}</span>
         <form
           action={async () => {

@@ -1,8 +1,9 @@
 // src/components/analyzer/CohortWaterfall.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { formatCurrency, formatPct } from "@/lib/format";
+import { ExportButton } from "@/components/ui/ExportButton";
 import type { CohortAnalysisResult, CohortRow } from "@/lib/cohort-analysis";
 
 const CATEGORY_META: Record<CohortRow["category"], { label: string; colorClass: string }> = {
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
+  const outerRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<CohortAnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,12 +67,15 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
   });
 
   return (
-    <div className="space-y-4">
+    <div ref={outerRef} className="space-y-4">
       {/* Cohort waterfall table */}
       <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-          Cohort: Active Pipeline at {dateA} → Status at {dateB}
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Cohort: Active Pipeline at {dateA} → Status at {dateB}
+          </h3>
+          <ExportButton getElement={() => outerRef.current} filename="cohort-waterfall" variant="icon" />
+        </div>
         <div className="flex flex-wrap gap-8 mb-6">
           <div>
             <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { formatCurrency, STAGE_LABELS, SOURCE_LABELS, DEAL_TYPE_LABELS } from "@/lib/format";
 import { Modal } from "@/components/ui/Modal";
 import { DealTable } from "@/components/ui/DealTable";
+import { ExportButton } from "@/components/ui/ExportButton";
 import type { DealRow } from "@/components/ui/DealTable";
 
 type GroupKey = "stage" | "source" | "typeOfDeal";
@@ -26,6 +27,7 @@ const BAR_COLORS = ["#34B3D4", "#EE8363", "#4BAC64", "#11327A", "#CCECF4", "#9CA
 type DrillDown = { title: string; deals: DealRow[] } | null;
 
 export function InteractiveBreakdown({ deals }: { deals: DealRow[] }) {
+  const cardRef = useRef<HTMLDivElement>(null);
   const [groupBy, setGroupBy]         = useState<GroupKey>("stage");
   const [breakdownBy, setBreakdownBy] = useState<GroupKey | "none">("none");
   const [drillDown, setDrillDown]     = useState<DrillDown>(null);
@@ -66,12 +68,13 @@ export function InteractiveBreakdown({ deals }: { deals: DealRow[] }) {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div ref={cardRef} className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
             Pipeline Breakdown
           </h2>
           <div className="flex items-center gap-4 text-sm text-gray-600">
+            <ExportButton getElement={() => cardRef.current} filename="pipeline-breakdown" variant="icon" />
             <label className="flex items-center gap-2">
               Group by:
               <select

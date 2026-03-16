@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { STAGE_LABELS, formatPct } from "@/lib/format";
+import { ExportButton } from "@/components/ui/ExportButton";
 import type { AssumptionRow, SnapshotConversionRow } from "@/lib/assumptions-analysis";
 
 type Props = {
@@ -42,6 +43,7 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export function AssumptionsAnalysis({ snapshotManifest }: Props) {
+  const cardRef = useRef<HTMLDivElement>(null);
   const [rows, setRows] = useState<AssumptionRow[] | null>(null);
   const [snapshotRows, setSnapshotRows] = useState<SnapshotConversionRow[] | null>(null);
   const [snapshotAt, setSnapshotAt] = useState<string | null>(null);
@@ -90,10 +92,13 @@ export function AssumptionsAnalysis({ snapshotManifest }: Props) {
     : null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
-        Assumptions Analysis
-      </h2>
+    <div ref={cardRef} className="bg-white rounded-xl shadow-sm p-6">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          Assumptions Analysis
+        </h2>
+        <ExportButton getElement={() => cardRef.current} filename="assumptions-analysis" variant="icon" />
+      </div>
       <p className="text-xs text-gray-400 mb-4">
         Model assumptions compared to actuals derived from current deal data.
         {snapshotLabel && (
