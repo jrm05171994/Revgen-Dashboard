@@ -2,12 +2,25 @@ import { prisma } from "@/lib/prisma";
 import type { DealRow } from "@/components/ui/DealTable";
 export type { BreakdownEntry } from "@/lib/format";
 
+export type WeightedForecastDeal = {
+  id: string;
+  name: string;
+  companyName: string | null;
+  stage: string;
+  value: number;
+  closeRate: number;
+  expectedClosedDate: string;
+  timingFactor: number;
+  contribution: number;
+};
+
 export type DashboardData = {
   // KPIs
   pipelineTotal: number;
   activeDealCount: number;
   avgDealSize: number;
   weightedForecast: number;
+  weightedForecastBreakdown: WeightedForecastDeal[];
   pipelineCoverage: number;
   // Revenue
   revenueToDate: number;
@@ -70,6 +83,7 @@ export async function getDashboardData(comparisonDays: number, year: number): Pr
   const yearMs = fiscalYearEnd.getTime() - fiscalYearStart.getTime();
   const rateMap = new Map(assumptions.map((a) => [a.stage as string, a.overallCloseRate]));
 
+  const weightedForecastBreakdown: WeightedForecastDeal[] = [];
   const weightedForecast = activeDeals.reduce((sum, deal) => {
     if (!deal.expectedClosedDate || !deal.stage || !deal.value) return sum;
     const closeDate = new Date(deal.expectedClosedDate);
@@ -77,8 +91,21 @@ export async function getDashboardData(comparisonDays: number, year: number): Pr
     const closeRate = rateMap.get(deal.stage as string) ?? 0;
     const remainingMs = Math.max(0, fiscalYearEnd.getTime() - closeDate.getTime());
     const timingFactor = yearMs > 0 ? remainingMs / yearMs : 0;
-    return sum + Number(deal.value) * closeRate * timingFactor;
+    const contribution = Number(deal.value) * closeRate * timingFactor;
+    weightedForecastBreakdown.push({
+      id: deal.id,
+      name: deal.name,
+      companyName: deal.company?.name ?? null,
+      stage: deal.stage as string,
+      value: Number(deal.value),
+      closeRate,
+      expectedClosedDate: deal.expectedClosedDate.toISOString(),
+      timingFactor,
+      contribution,
+    });
+    return sum + contribution;
   }, 0);
+  weightedForecastBreakdown.sort((a, b) => b.contribution - a.contribution);
 
   // Revenue
   const revenueToDate = Number(actualRevSum._sum.amount ?? 0);
@@ -124,7 +151,7 @@ export async function getDashboardData(comparisonDays: number, year: number): Pr
     }));
 
   return {
-    pipelineTotal, weightedForecast, activeDealCount, avgDealSize, pipelineCoverage,
+    pipelineTotal, weightedForecast, weightedForecastBreakdown, activeDealCount, avgDealSize, pipelineCoverage,
     revenueToDate, expectedFromExisting, bookedRevenue,
     revenueGoal, existingArr, revenueGap, pctOfGoal,
     year,

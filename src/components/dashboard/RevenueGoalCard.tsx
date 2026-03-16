@@ -12,12 +12,17 @@ export function RevenueGoalCard({ data }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
   const { goalOverride, bookedOverride, setGoalOverride, setBookedOverride, clearAll } = useScenario();
 
-  const displayGoal    = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
+  const displayGoal     = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
   const displayExpected = bookedOverride !== "" ? (parseFloat(bookedOverride) || data.expectedFromExisting) : data.expectedFromExisting;
   const displayBooked   = data.revenueToDate + displayExpected;
-  const displayGap    = Math.max(0, displayGoal - displayBooked);
-  const displayPct    = displayGoal > 0 ? displayBooked / displayGoal : 0;
-  const scenarioActive = goalOverride !== "" || bookedOverride !== "";
+  const displayGap      = Math.max(0, displayGoal - displayBooked);
+  const displayPct      = displayGoal > 0 ? displayBooked / displayGoal : 0;
+  const forecastPct     = displayGoal > 0 ? data.weightedForecast / displayGoal : 0;
+  const scenarioActive  = goalOverride !== "" || bookedOverride !== "";
+
+  // Cap segments so they don't overflow 100%
+  const bookedWidth   = Math.min(100, displayPct * 100);
+  const forecastWidth = Math.min(100 - bookedWidth, forecastPct * 100);
 
   return (
     <div ref={cardRef} className="bg-white rounded-xl shadow-sm p-6">
@@ -65,6 +70,7 @@ export function RevenueGoalCard({ data }: Props) {
         </div>
       </div>
 
+      {/* Metrics row */}
       <div className="flex flex-wrap gap-6 mb-4">
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Revenue Goal</p>
@@ -81,6 +87,11 @@ export function RevenueGoalCard({ data }: Props) {
           </p>
         </div>
         <div>
+          <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Weighted Forecast</p>
+          <p className="text-base font-extrabold text-teal">{formatCurrency(data.weightedForecast)}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">in-year pipeline contribution</p>
+        </div>
+        <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Revenue Gap</p>
           <p className="text-base font-extrabold text-coral">{formatCurrency(displayGap)}</p>
         </div>
@@ -90,18 +101,41 @@ export function RevenueGoalCard({ data }: Props) {
         </div>
       </div>
 
-      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+      {/* Stacked progress bar */}
+      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2 relative">
+        {/* Booked revenue segment */}
         <div
-          className="h-full rounded-full bg-gradient-to-r from-teal to-navy transition-[width] duration-500"
-          style={{ width: `${Math.min(100, displayPct * 100)}%` }}
+          className="h-full rounded-l-full bg-gradient-to-r from-teal to-navy absolute left-0 top-0 transition-[width] duration-500"
+          style={{ width: `${bookedWidth}%` }}
         />
+        {/* Weighted forecast segment */}
+        {forecastWidth > 0 && (
+          <div
+            className="h-full absolute top-0 bg-teal/30 transition-[width,left] duration-500"
+            style={{ left: `${bookedWidth}%`, width: `${forecastWidth}%` }}
+          />
+        )}
       </div>
-      <div className="flex justify-between text-[10px] text-gray-400">
+
+      {/* Bar axis labels */}
+      <div className="flex justify-between text-[10px] text-gray-400 mb-2">
         <span>$0</span>
         <span>{formatCurrency(displayGoal * 0.25)}</span>
         <span>{formatCurrency(displayGoal * 0.5)}</span>
         <span>{formatCurrency(displayGoal * 0.75)}</span>
         <span>{formatCurrency(displayGoal)}</span>
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-4 text-[10px] text-gray-400">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-2 rounded-sm bg-gradient-to-r from-teal to-navy" />
+          Booked Revenue
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-2 rounded-sm bg-teal/30 border border-teal/40" />
+          Weighted Forecast
+        </span>
       </div>
     </div>
   );
