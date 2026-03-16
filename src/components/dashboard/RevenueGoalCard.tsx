@@ -22,11 +22,14 @@ export function RevenueGoalCard({ data }: Props) {
   const forecastPct     = displayGoal > 0 ? data.weightedForecast / displayGoal : 0;
   const scenarioActive  = goalOverride !== "" || bookedOverride !== "";
 
-  // Cap segments so they don't overflow 100%
-  // When includeWeighted is on, the booked bar already covers the full effective amount;
-  // hide the separate forecast segment to avoid double-counting visually.
-  const bookedWidth   = Math.min(100, displayPct * 100);
-  const forecastWidth = includeWeighted ? 0 : Math.min(100 - bookedWidth, forecastPct * 100);
+  // Booked segment always based on displayBooked (not effectiveBooked) so forecast stays visually separate.
+  // When included: forecast segment sits on top of the booked bar, still its own teal/30 color.
+  // When excluded: forecast segment is hidden entirely.
+  const rawBookedPct  = displayGoal > 0 ? displayBooked / displayGoal : 0;
+  const bookedWidth   = Math.min(100, rawBookedPct * 100);
+  const forecastWidth = includeWeighted
+    ? Math.min(100 - bookedWidth, forecastPct * 100)
+    : 0;
 
   return (
     <div ref={cardRef} className="bg-white rounded-xl shadow-sm p-6">
@@ -98,11 +101,6 @@ export function RevenueGoalCard({ data }: Props) {
           <p className="text-[10px] text-gray-400 mt-0.5">
             {formatCurrency(data.revenueToDate)} recognized + {formatCurrency(displayExpected)} expected from existing
           </p>
-          {includeWeighted && (
-            <p className="text-[10px] text-teal mt-0.5">
-              + {formatCurrency(data.weightedForecast)} weighted pipeline
-            </p>
-          )}
         </div>
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Weighted Forecast</p>
@@ -112,6 +110,9 @@ export function RevenueGoalCard({ data }: Props) {
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Revenue Gap</p>
           <p className="text-base font-extrabold text-coral">{formatCurrency(displayGap)}</p>
+          <p className="text-[10px] mt-0.5" style={{ color: includeWeighted ? "#34B3D4" : "#9CA3AF" }}>
+            {includeWeighted ? "weighted pipeline included" : "weighted pipeline excluded"}
+          </p>
         </div>
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">% of Goal</p>
@@ -150,10 +151,12 @@ export function RevenueGoalCard({ data }: Props) {
           <span className="inline-block w-3 h-2 rounded-sm bg-gradient-to-r from-teal to-navy" />
           Booked Revenue
         </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-2 rounded-sm bg-teal/30 border border-teal/40" />
-          Weighted Forecast
-        </span>
+        {includeWeighted && (
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-3 h-2 rounded-sm bg-teal/30 border border-teal/40" />
+            Weighted Forecast
+          </span>
+        )}
       </div>
     </div>
   );
