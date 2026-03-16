@@ -8,15 +8,6 @@ export const maxDuration = 60;
 const ATTIO_BASE = "https://api.attio.com/v2";
 const ATTIO_KEY = process.env.ATTIO_API_KEY;
 
-const STAGE_MAP: Record<string, string> = {
-  "First Conversation": "first_convo",
-  "Opp Qualification":  "opp_qual",
-  "Stakeholder Buy-In": "stakeholder",
-  "Verbal Commit":      "verbal",
-  "Contracting":        "contracting",
-  "Closed-Won":         "closed_won",
-  "Lost":               "lost",
-};
 
 type HistoricEntry = {
   active_from: string | null;
