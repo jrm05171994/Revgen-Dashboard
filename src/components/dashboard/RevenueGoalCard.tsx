@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useScenario } from "@/lib/use-scenario";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { ExportButton } from "@/components/ui/ExportButton";
@@ -10,19 +10,23 @@ type Props = { data: DashboardData };
 
 export function RevenueGoalCard({ data }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const [includeWeighted, setIncludeWeighted] = useState(false);
   const { goalOverride, bookedOverride, setGoalOverride, setBookedOverride, clearAll } = useScenario();
 
   const displayGoal     = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
   const displayExpected = bookedOverride !== "" ? (parseFloat(bookedOverride) || data.expectedFromExisting) : data.expectedFromExisting;
   const displayBooked   = data.revenueToDate + displayExpected;
-  const displayGap      = Math.max(0, displayGoal - displayBooked);
-  const displayPct      = displayGoal > 0 ? displayBooked / displayGoal : 0;
+  const effectiveBooked = includeWeighted ? displayBooked + data.weightedForecast : displayBooked;
+  const displayGap      = Math.max(0, displayGoal - effectiveBooked);
+  const displayPct      = displayGoal > 0 ? effectiveBooked / displayGoal : 0;
   const forecastPct     = displayGoal > 0 ? data.weightedForecast / displayGoal : 0;
   const scenarioActive  = goalOverride !== "" || bookedOverride !== "";
 
   // Cap segments so they don't overflow 100%
+  // When includeWeighted is on, the booked bar already covers the full effective amount;
+  // hide the separate forecast segment to avoid double-counting visually.
   const bookedWidth   = Math.min(100, displayPct * 100);
-  const forecastWidth = Math.min(100 - bookedWidth, forecastPct * 100);
+  const forecastWidth = includeWeighted ? 0 : Math.min(100 - bookedWidth, forecastPct * 100);
 
   return (
     <div ref={cardRef} className="bg-white rounded-xl shadow-sm p-6">
@@ -62,6 +66,15 @@ export function RevenueGoalCard({ data }: Props) {
               className="w-28 px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
             />
           </div>
+          <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+            <input
+              type="checkbox"
+              checked={includeWeighted}
+              onChange={(e) => setIncludeWeighted(e.target.checked)}
+              className="w-3.5 h-3.5 accent-teal"
+            />
+            <span className="text-xs text-gray-500">Include Weighted Pipeline?</span>
+          </label>
           {scenarioActive && (
             <button onClick={clearAll} className="text-xs text-gray-400 hover:text-gray-600 whitespace-nowrap">
               Reset all
@@ -85,6 +98,11 @@ export function RevenueGoalCard({ data }: Props) {
           <p className="text-[10px] text-gray-400 mt-0.5">
             {formatCurrency(data.revenueToDate)} recognized + {formatCurrency(displayExpected)} expected from existing
           </p>
+          {includeWeighted && (
+            <p className="text-[10px] text-teal mt-0.5">
+              + {formatCurrency(data.weightedForecast)} weighted pipeline
+            </p>
+          )}
         </div>
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Weighted Forecast</p>
