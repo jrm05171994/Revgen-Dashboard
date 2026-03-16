@@ -7,8 +7,6 @@ import { formatCurrency } from "@/lib/format";
 type FiscalConfig = {
   fiscalYear: number;
   revenueGoal: number;
-  existingArr: number;
-  expectedFromExisting: number;
   fiscalYearStart: string;
   fiscalYearEnd: string;
 };
@@ -23,8 +21,6 @@ export function FiscalConfigSection({ initialConfig, year }: Props) {
     initialConfig ?? {
       fiscalYear: year,
       revenueGoal: 0,
-      existingArr: 0,
-      expectedFromExisting: 0,
       fiscalYearStart: `${year}-01-01`,
       fiscalYearEnd: `${year}-12-31`,
     }
@@ -35,9 +31,7 @@ export function FiscalConfigSection({ initialConfig, year }: Props) {
   function handleChange(field: keyof FiscalConfig, value: string) {
     setConfig((prev) => ({
       ...prev,
-      [field]: ["revenueGoal", "existingArr", "expectedFromExisting"].includes(field)
-        ? parseFloat(value) || 0
-        : value,
+      [field]: field === "revenueGoal" ? parseFloat(value) || 0 : value,
     }));
   }
 
@@ -61,19 +55,17 @@ export function FiscalConfigSection({ initialConfig, year }: Props) {
     }
   }
 
-  const newPipelineNeeded = Math.max(0, config.revenueGoal - config.existingArr - config.expectedFromExisting);
-
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
         Fiscal Year {year} — Revenue Targets
       </h2>
       <p className="text-xs text-gray-400 mb-5">
-        These values drive the Dashboard KPIs: revenue goal, coverage ratio, and booked revenue tracking.
+        Sets the revenue goal and fiscal year dates used across Dashboard KPIs.
       </p>
 
       <form onSubmit={handleSave} className="space-y-5">
-        <div className="grid grid-cols-2 gap-5">
+        <div className="max-w-xs">
           <div className="flex flex-col gap-1">
             <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
               Revenue Goal ($)
@@ -86,42 +78,6 @@ export function FiscalConfigSection({ initialConfig, year }: Props) {
               className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-teal/40"
             />
             <p className="text-[10px] text-gray-400">{formatCurrency(config.revenueGoal)}</p>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
-              Existing ARR ($)
-            </label>
-            <input
-              type="number"
-              step="1"
-              value={config.existingArr || ""}
-              onChange={(e) => handleChange("existingArr", e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-teal/40"
-            />
-            <p className="text-[10px] text-gray-400">{formatCurrency(config.existingArr)}</p>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
-              Expected from Existing ($)
-            </label>
-            <input
-              type="number"
-              step="1"
-              value={config.expectedFromExisting || ""}
-              onChange={(e) => handleChange("expectedFromExisting", e.target.value)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-teal/40"
-            />
-            <p className="text-[10px] text-gray-400">{formatCurrency(config.expectedFromExisting)}</p>
-          </div>
-
-          <div className="flex flex-col gap-1 justify-end pb-1">
-            <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
-              New Pipeline Needed
-            </p>
-            <p className="text-2xl font-extrabold text-navy">{formatCurrency(newPipelineNeeded)}</p>
-            <p className="text-[10px] text-gray-400">Revenue Goal − Existing ARR − Expected from Existing</p>
           </div>
         </div>
 

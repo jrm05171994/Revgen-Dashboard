@@ -34,8 +34,6 @@ export default async function SettingsPage() {
     ? {
         fiscalYear: fiscalConfig.fiscalYear,
         revenueGoal: Number(fiscalConfig.revenueGoal),
-        existingArr: Number(fiscalConfig.existingArr),
-        expectedFromExisting: Number(fiscalConfig.expectedFromExisting),
         fiscalYearStart: fiscalConfig.fiscalYearStart.toISOString(),
         fiscalYearEnd: fiscalConfig.fiscalYearEnd.toISOString(),
       }
