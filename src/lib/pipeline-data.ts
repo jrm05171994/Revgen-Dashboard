@@ -20,6 +20,8 @@ export type PipelineData = {
   byDealType: BreakdownEntry[];
   // All active deals for interactive breakdown and drill-down modals
   activeDeals: DealRow[];
+  // Stage assumptions for client-side weighted forecast computation
+  stageAssumptions: { stage: string; overallCloseRate: number }[];
 };
 
 function toEntries(
@@ -138,5 +140,6 @@ export async function getPipelineData(): Promise<PipelineData> {
     byCompanyType: toEntries(byCompanyTypeMap),
     byDealType: toEntries(byDealTypeMap),
     activeDeals: activeDealRows,
+    stageAssumptions: assumptions.map((a) => ({ stage: a.stage as string, overallCloseRate: a.overallCloseRate })),
   };
 }

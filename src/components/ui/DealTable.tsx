@@ -36,6 +36,7 @@ export function DealTable({ deals, onRowClick, compact = false }: Props) {
             <th className="pb-2 pr-4">Stage</th>
             {!compact && <th className="pb-2 pr-4">Source</th>}
             {!compact && <th className="pb-2 pr-4">Type</th>}
+            {!compact && <th className="pb-2 pr-4">Exp. Close</th>}
             <th className="pb-2">Status</th>
           </tr>
         </thead>
@@ -66,6 +67,13 @@ export function DealTable({ deals, onRowClick, compact = false }: Props) {
               {!compact && (
                 <td className="py-2.5 pr-4 text-gray-500">
                   {deal.typeOfDeal ? (DEAL_TYPE_LABELS[deal.typeOfDeal] ?? deal.typeOfDeal) : "—"}
+                </td>
+              )}
+              {!compact && (
+                <td className="py-2.5 pr-4 text-gray-500 text-xs">
+                  {deal.expectedClosedDate
+                    ? new Date(deal.expectedClosedDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                    : "—"}
                 </td>
               )}
               <td className="py-2.5">
