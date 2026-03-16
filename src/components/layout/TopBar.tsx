@@ -1,5 +1,5 @@
 import { auth, signOut } from "@/lib/auth";
-import { ExportButton } from "@/components/ui/ExportButton";
+import { PageExportButton } from "@/components/ui/PageExportButton";
 
 interface TopBarProps {
   title: string;
@@ -19,10 +19,9 @@ export async function TopBar({ title, action, exportId }: TopBarProps) {
 
       <div className="flex items-center gap-4">
         {exportId && (
-          <ExportButton
-            getElement={() => document.getElementById(exportId!)}
+          <PageExportButton
+            exportId={exportId}
             filename={title.toLowerCase().replace(/\s+/g, "-")}
-            variant="button"
           />
         )}
         <span className="text-sm text-gray-500">{session?.user?.name}</span>
