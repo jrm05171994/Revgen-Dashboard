@@ -84,6 +84,9 @@ export function SnapshotPanel({ onReady }: Props) {
           {loading ? "Generating…" : "Generate Analysis"}
         </button>
       </div>
+      <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        Date A must be the earlier (older) date — the analysis shows how the Date A cohort progressed by Date B.
+      </p>
       {error && (
         <p className="mt-3 text-xs text-red-500">{error}</p>
       )}

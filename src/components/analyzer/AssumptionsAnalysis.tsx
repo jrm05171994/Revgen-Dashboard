@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { STAGE_LABELS, formatPct } from "@/lib/format";
 import type { AssumptionRow, SnapshotConversionRow } from "@/lib/assumptions-analysis";
 
@@ -45,13 +45,24 @@ export function AssumptionsAnalysis({ snapshotManifest }: Props) {
   const [rows, setRows] = useState<AssumptionRow[] | null>(null);
   const [snapshotRows, setSnapshotRows] = useState<SnapshotConversionRow[] | null>(null);
   const [snapshotAt, setSnapshotAt] = useState<string | null>(null);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate]     = useState("");
 
-  useEffect(() => {
-    fetch("/api/analyzer/assumptions")
+  const fetchActuals = useCallback(() => {
+    const params = new URLSearchParams();
+    if (fromDate) params.set("fromDate", fromDate);
+    if (toDate)   params.set("toDate",   toDate);
+    const url = `/api/analyzer/assumptions${params.size ? `?${params}` : ""}`;
+
+    fetch(url)
       .then((r) => r.json())
       .then((d: { rows: AssumptionRow[] }) => setRows(d.rows))
       .catch(() => setRows([]));
-  }, []);
+  }, [fromDate, toDate]);
+
+  useEffect(() => {
+    fetchActuals();
+  }, [fetchActuals]);
 
   useEffect(() => {
     if (!snapshotManifest) {
@@ -70,6 +81,14 @@ export function AssumptionsAnalysis({ snapshotManifest }: Props) {
 
   const snapshotLabel = snapshotAt ? formatDateLabel(snapshotAt) : null;
 
+  const dateRangeLabel = fromDate && toDate
+    ? `${fromDate} – ${toDate}`
+    : fromDate
+    ? `From ${fromDate}`
+    : toDate
+    ? `As of ${toDate}`
+    : null;
+
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
@@ -81,6 +100,45 @@ export function AssumptionsAnalysis({ snapshotManifest }: Props) {
           <> The <strong className="text-navy">{snapshotLabel}</strong> column shows conversion rates from the selected snapshot.</>
         )}
       </p>
+
+      {/* Date range filter */}
+      <div className="flex flex-wrap items-end gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100 mb-5">
+        <div className="flex flex-col gap-1">
+          <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+            Actuals From (optional)
+          </label>
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+            Actuals To / As-Of (optional)
+          </label>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+          />
+        </div>
+        {(fromDate || toDate) && (
+          <button
+            onClick={() => { setFromDate(""); setToDate(""); }}
+            className="text-xs text-gray-400 hover:text-gray-600 mt-4"
+          >
+            Clear
+          </button>
+        )}
+        {dateRangeLabel && (
+          <p className="text-xs text-gray-500 mt-4">
+            Filtering actuals by stage entry date: <strong className="text-navy">{dateRangeLabel}</strong>
+          </p>
+        )}
+      </div>
 
       {!rows ? (
         <p className="text-xs text-gray-400">Loading…</p>
@@ -116,7 +174,6 @@ export function AssumptionsAnalysis({ snapshotManifest }: Props) {
                     <td className="py-3 pr-4 font-medium text-navy">
                       {STAGE_LABELS[row.stage] ?? row.stage}
                     </td>
-                    {/* Conv to Next */}
                     <td className="py-3 pr-2 text-right text-gray-500">
                       {formatPct(row.modelConversionToNext)}
                     </td>
@@ -130,7 +187,6 @@ export function AssumptionsAnalysis({ snapshotManifest }: Props) {
                         <DeltaArrow model={row.modelConversionToNext} actual={snap?.conversionToNext ?? null} />
                       </td>
                     )}
-                    {/* Avg Days */}
                     <td className="py-3 pr-2 text-right text-gray-500">
                       {row.modelAvgDaysInStage}d
                     </td>

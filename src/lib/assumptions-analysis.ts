@@ -21,7 +21,7 @@ export type SnapshotConversionRow = {
   conversionToNext: number | null;
 };
 
-export async function getAssumptionsAnalysis(): Promise<AssumptionRow[]> {
+export async function getAssumptionsAnalysis(fromDate?: Date, toDate?: Date): Promise<AssumptionRow[]> {
   const [assumptions, deals] = await Promise.all([
     prisma.stageAssumption.findMany(),
     prisma.deal.findMany({
@@ -32,22 +32,31 @@ export async function getAssumptionsAnalysis(): Promise<AssumptionRow[]> {
   const modelMap = new Map(assumptions.map((a) => [a.stage as string, a]));
   const today = new Date();
 
+  // Filter deals by stageEnteredAt date range if provided
+  const filteredDeals = deals.filter((d) => {
+    if (!d.stageEnteredAt) return true; // include deals without stageEnteredAt
+    const entered = new Date(d.stageEnteredAt);
+    if (fromDate && entered < fromDate) return false;
+    if (toDate && entered > toDate) return false;
+    return true;
+  });
+
   return STAGE_ORDER.map((stage) => {
     const model = modelMap.get(stage);
     const stageIdx = STAGE_ORDER.indexOf(stage);
 
-    const atStage = deals.filter(
+    const atStage = filteredDeals.filter(
       (d) => d.stage === stage && (d.status === "active" || d.status === "stalled")
     );
 
     const laterStages = STAGE_ORDER.slice(stageIdx) as string[];
-    const atOrPast = deals.filter(
+    const atOrPast = filteredDeals.filter(
       (d) =>
         laterStages.includes(d.stage ?? "") ||
         d.stage === "closed_won" ||
         d.stage === "lost"
     );
-    const pastThisStage = deals.filter(
+    const pastThisStage = filteredDeals.filter(
       (d) =>
         (STAGE_ORDER.slice(stageIdx + 1) as string[]).includes(d.stage ?? "") ||
         d.stage === "closed_won"

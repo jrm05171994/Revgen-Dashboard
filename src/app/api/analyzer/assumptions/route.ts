@@ -23,6 +23,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ snapshotRows, snapshotAt: manifest.snapshotAt });
   }
 
-  const rows = await getAssumptionsAnalysis();
+  const fromDateStr = searchParams.get("fromDate");
+  const toDateStr   = searchParams.get("toDate");
+  const fromDate    = fromDateStr ? new Date(fromDateStr) : undefined;
+  const toDate      = toDateStr   ? new Date(toDateStr)   : undefined;
+
+  const rows = await getAssumptionsAnalysis(fromDate, toDate);
   return NextResponse.json({ rows });
 }
