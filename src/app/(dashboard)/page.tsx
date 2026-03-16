@@ -14,12 +14,20 @@ type Props = {
 export default async function DashboardPage({ searchParams }: Props) {
   const raw = parseInt(searchParams.compare ?? "30", 10);
   const comparisonDays = isNaN(raw) ? 30 : raw;
-  const rawYear = parseInt(searchParams.year ?? "2026", 10);
-  const year = isNaN(rawYear) ? 2026 : rawYear;
+  const currentYear = new Date().getFullYear();
+  const rawYear = parseInt(searchParams.year ?? String(currentYear), 10);
+  const year = isNaN(rawYear) ? currentYear : rawYear;
   const data = await getDashboardData(comparisonDays, year);
 
   return (
     <div>
+      {data.revenueGoal === 0 && (
+        <div className="mx-6 mt-4 px-4 py-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 font-medium">
+          No fiscal config found for {year}. Go to{" "}
+          <a href="/settings" className="underline hover:text-yellow-900">Settings</a>{" "}
+          to set revenue targets for this year.
+        </div>
+      )}
       <TopBar
         title="Dashboard"
         action={

@@ -86,8 +86,8 @@ export async function getDashboardData(comparisonDays: number, year: number): Pr
   const bookedRevenue = revenueToDate + expectedFromExisting;
 
   // Goal metrics
-  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 3_320_386);
-  const existingArr = Number(fiscalConfig?.existingArr ?? 1_200_000);
+  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 0);
+  const existingArr = Number(fiscalConfig?.existingArr ?? 0);
   const revenueGap = Math.max(0, revenueGoal - bookedRevenue);
   const pctOfGoal = revenueGoal > 0 ? bookedRevenue / revenueGoal : 0;
   const pipelineCoverage = revenueGap > 0 ? pipelineTotal / revenueGap : 0;

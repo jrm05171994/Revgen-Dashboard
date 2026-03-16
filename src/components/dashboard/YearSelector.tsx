@@ -3,12 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { clsx } from "clsx";
 
-const YEARS = [2025, 2026, 2027, 2028];
+const currentYear = new Date().getFullYear();
+const YEARS = [currentYear - 1, currentYear, currentYear + 1];
 
 export function YearSelector() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentYear = parseInt(searchParams.get("year") ?? "2026", 10);
+  const currentYear = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()), 10);
 
   function selectYear(year: number) {
     const params = new URLSearchParams(searchParams.toString());
