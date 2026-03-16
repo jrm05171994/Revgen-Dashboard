@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const GOAL_KEY = "scenario_goalOverride";
+const GOAL_KEY   = "scenario_goalOverride";
 const BOOKED_KEY = "scenario_bookedOverride";
 
 function readStorage(key: string): string {
@@ -18,32 +18,62 @@ function writeStorage(key: string, value: string) {
   } catch {}
 }
 
-export function useScenario() {
-  const [goalOverride, setGoalOverrideState] = useState<string>("");
-  const [bookedOverride, setBookedOverrideState] = useState<string>("");
+// Module-level singleton state
+let _goal   = "";
+let _booked = "";
+const _listeners = new Set<() => void>();
 
-  // Hydrate from localStorage after mount (avoids SSR mismatch)
+function _notify() {
+  _listeners.forEach((fn) => fn());
+}
+
+function _setGoal(value: string) {
+  _goal = value;
+  writeStorage(GOAL_KEY, value);
+  _notify();
+}
+
+function _setBooked(value: string) {
+  _booked = value;
+  writeStorage(BOOKED_KEY, value);
+  _notify();
+}
+
+function _clearAll() {
+  _goal = "";
+  _booked = "";
+  writeStorage(GOAL_KEY, "");
+  writeStorage(BOOKED_KEY, "");
+  _notify();
+}
+
+export function useScenario() {
+  const [, rerender] = useState(0);
+
+  // Subscribe to module-level changes
   useEffect(() => {
-    setGoalOverrideState(readStorage(GOAL_KEY));
-    setBookedOverrideState(readStorage(BOOKED_KEY));
+    const trigger = () => rerender((n) => n + 1);
+    _listeners.add(trigger);
+    return () => { _listeners.delete(trigger); };
   }, []);
 
-  function setGoalOverride(value: string) {
-    setGoalOverrideState(value);
-    writeStorage(GOAL_KEY, value);
-  }
+  // Hydrate from localStorage on first client mount
+  useEffect(() => {
+    const g = readStorage(GOAL_KEY);
+    const b = readStorage(BOOKED_KEY);
+    if (g !== _goal || b !== _booked) {
+      _goal   = g;
+      _booked = b;
+      _notify();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  function setBookedOverride(value: string) {
-    setBookedOverrideState(value);
-    writeStorage(BOOKED_KEY, value);
-  }
-
-  function clearAll() {
-    setGoalOverrideState("");
-    setBookedOverrideState("");
-    writeStorage(GOAL_KEY, "");
-    writeStorage(BOOKED_KEY, "");
-  }
-
-  return { goalOverride, bookedOverride, setGoalOverride, setBookedOverride, clearAll };
+  return {
+    goalOverride:    _goal,
+    bookedOverride:  _booked,
+    setGoalOverride:  _setGoal,
+    setBookedOverride: _setBooked,
+    clearAll:         _clearAll,
+  };
 }

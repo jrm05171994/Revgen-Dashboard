@@ -23,7 +23,7 @@ export function KpiCard({ label, value, subValue, delta, flagColor }: Props) {
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
         {label}
       </p>
-      <p className="text-2xl font-bold text-navy">{value}</p>
+      <p className={`text-2xl font-bold ${flagColor === "green" ? "text-green-600" : "text-navy"}`}>{value}</p>
       {subValue && <p className="text-sm text-gray-400 mt-0.5">{subValue}</p>}
       {delta && (
         <div className="mt-2 flex items-center gap-1.5">
