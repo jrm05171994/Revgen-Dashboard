@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { fetchSheetAssumptions } from "@/lib/sheets";
+import { runSheetsSync } from "@/lib/run-sync";
 import { verifyCronAuth } from "@/lib/cron-auth";
 
 export async function POST(req: NextRequest) {
@@ -8,29 +8,16 @@ export async function POST(req: NextRequest) {
   if (authError) return authError;
 
   try {
-    const assumptions = await fetchSheetAssumptions();
-
-    await Promise.all(
-      assumptions.map((a) =>
-        prisma.stageAssumption.update({
-          where: { stage: a.stage },
-          data: {
-            avgDaysInStage: a.avgDaysInStage,
-            conversionToNext: a.conversionToNext,
-            overallCloseRate: a.overallCloseRate,
-          },
-        })
-      )
-    );
+    const result = await runSheetsSync();
 
     await prisma.auditLog.create({
       data: {
         action: "SYNC_SHEETS",
-        details: { rowsUpdated: assumptions.length },
+        details: result,
       },
     });
 
-    return NextResponse.json({ ok: true, rowsUpdated: assumptions.length });
+    return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     console.error("[sync/sheets]", err);
     return NextResponse.json({ error: String(err) }, { status: 500 });
