@@ -19,7 +19,6 @@ export async function GET() {
 
 type AssumptionUpdate = {
   stage: DealStage;
-  overallCloseRate: number;
   conversionToNext: number;
   avgDaysInStage: number;
 };
@@ -47,7 +46,6 @@ export async function PATCH(req: Request) {
         tx.stageAssumption.update({
           where: { stage: u.stage },
           data: {
-            overallCloseRate: u.overallCloseRate,
             conversionToNext: u.conversionToNext,
             avgDaysInStage: u.avgDaysInStage,
             updatedById: session.user.id,

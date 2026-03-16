@@ -5,7 +5,7 @@ import { useState } from "react";
 
 type AssumptionRow = {
   stage: string;
-  overallCloseRate: number;
+  overallCloseRate: number; // read from DB / Sheets sync; not editable in UI
   conversionToNext: number;
   avgDaysInStage: number;
 };
@@ -34,7 +34,7 @@ export function StageAssumptionsSection({ initialRows }: Props) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  function handleChange(stage: string, field: keyof Omit<AssumptionRow, "stage">, value: string) {
+  function handleChange(stage: string, field: keyof Omit<AssumptionRow, "stage" | "overallCloseRate">, value: string) {
     setRows((prev) =>
       prev.map((r) =>
         r.stage === stage
@@ -51,7 +51,13 @@ export function StageAssumptionsSection({ initialRows }: Props) {
       const res = await fetch("/api/settings/assumptions", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ updates: rows }),
+        body: JSON.stringify({
+          updates: rows.map(({ stage, conversionToNext, avgDaysInStage }) => ({
+            stage,
+            conversionToNext,
+            avgDaysInStage,
+          })),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Save failed");
@@ -78,7 +84,6 @@ export function StageAssumptionsSection({ initialRows }: Props) {
           <thead>
             <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
               <th className="pb-2 pr-6 w-48">Stage</th>
-              <th className="pb-2 pr-6 text-right w-40">Overall Close Rate</th>
               <th className="pb-2 pr-6 text-right w-40">Conv. to Next</th>
               <th className="pb-2 text-right w-36">Avg Days in Stage</th>
             </tr>
@@ -88,22 +93,6 @@ export function StageAssumptionsSection({ initialRows }: Props) {
               <tr key={row.stage} className="border-b last:border-0">
                 <td className="py-3 pr-6 font-medium text-navy">
                   {STAGE_LABELS[row.stage] ?? row.stage}
-                </td>
-                <td className="py-2 pr-6">
-                  <div className="flex items-center justify-end gap-1">
-                    <input
-                      type="number"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={row.overallCloseRate}
-                      onChange={(e) => handleChange(row.stage, "overallCloseRate", e.target.value)}
-                      className="w-20 px-2 py-1 text-sm text-right border border-gray-200 rounded-lg text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
-                    />
-                    <span className="text-xs text-gray-400 w-6">
-                      {(row.overallCloseRate * 100).toFixed(0)}%
-                    </span>
-                  </div>
                 </td>
                 <td className="py-2 pr-6">
                   <div className="flex items-center justify-end gap-1">
