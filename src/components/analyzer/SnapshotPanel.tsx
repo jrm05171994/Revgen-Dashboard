@@ -4,7 +4,7 @@
 import { useState } from "react";
 
 type Props = {
-  onReady: (manifestIdA: string, manifestIdB: string) => void;
+  onReady: (manifestIdA: string, dateA: string, manifestIdB: string, dateB: string) => void;
 };
 
 export function SnapshotPanel({ onReady }: Props) {
@@ -36,7 +36,7 @@ export function SnapshotPanel({ onReady }: Props) {
         generateSnapshot(dateA + "T00:00:00Z"),
         generateSnapshot(dateB + "T00:00:00Z"),
       ]);
-      onReady(idA, idB);
+      onReady(idA, dateA, idB, dateB);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {

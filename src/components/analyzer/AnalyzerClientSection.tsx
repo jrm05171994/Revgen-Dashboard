@@ -4,16 +4,24 @@
 import { useState } from "react";
 import { SnapshotPanel } from "./SnapshotPanel";
 import { CohortWaterfall } from "./CohortWaterfall";
+import { AssumptionsAnalysis } from "./AssumptionsAnalysis";
+
+type ManifestInfo = { id: string; date: string };
 
 export function AnalyzerClientSection() {
-  const [manifests, setManifests] = useState<{ a: string; b: string } | null>(null);
+  const [manifests, setManifests] = useState<{ a: ManifestInfo; b: ManifestInfo } | null>(null);
 
   return (
-    <div>
-      <SnapshotPanel onReady={(a, b) => setManifests({ a, b })} />
+    <div className="space-y-8">
+      <SnapshotPanel
+        onReady={(idA, dateA, idB, dateB) =>
+          setManifests({ a: { id: idA, date: dateA }, b: { id: idB, date: dateB } })
+        }
+      />
       {manifests && (
-        <CohortWaterfall manifestIdA={manifests.a} manifestIdB={manifests.b} />
+        <CohortWaterfall manifestIdA={manifests.a.id} manifestIdB={manifests.b.id} />
       )}
+      <AssumptionsAnalysis snapshotManifest={manifests?.b ?? null} />
     </div>
   );
 }
