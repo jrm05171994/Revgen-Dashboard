@@ -8,36 +8,36 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
-async function getSettingsData(year: number) {
-  const [users, invites, fiscalConfig, assumptions] = await Promise.all([
+async function getSettingsData(years: number[]) {
+  const [users, invites, fiscalConfigs, assumptions] = await Promise.all([
     prisma.user.findMany({
       select: { id: true, name: true, email: true, role: true, createdAt: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.invite.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.fiscalConfig.findUnique({ where: { fiscalYear: year } }),
+    prisma.fiscalConfig.findMany({
+      where: { fiscalYear: { in: years } },
+    }),
     prisma.stageAssumption.findMany({ orderBy: { stage: "asc" } }),
   ]);
 
-  return { users, invites, fiscalConfig, assumptions };
+  return { users, invites, fiscalConfigs, assumptions };
 }
 
 export default async function SettingsPage() {
   const session = await auth();
   if (!session || session.user.role !== "FINANCE") redirect("/");
 
-  const year = new Date().getFullYear();
-  const { users, invites, fiscalConfig, assumptions } = await getSettingsData(year);
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+  const { users, invites, fiscalConfigs, assumptions } = await getSettingsData(years);
 
-  // Serialize Prisma Decimal/Date to plain numbers/strings for client components
-  const serializedConfig = fiscalConfig
-    ? {
-        fiscalYear: fiscalConfig.fiscalYear,
-        revenueGoal: Number(fiscalConfig.revenueGoal),
-        fiscalYearStart: fiscalConfig.fiscalYearStart.toISOString(),
-        fiscalYearEnd: fiscalConfig.fiscalYearEnd.toISOString(),
-      }
-    : null;
+  // Build a config entry for every year in the range, defaulting to 0 if not yet set
+  const configsByYear = new Map(fiscalConfigs.map((c) => [c.fiscalYear, c]));
+  const serializedConfigs = years.map((y) => ({
+    fiscalYear: y,
+    revenueGoal: Number(configsByYear.get(y)?.revenueGoal ?? 0),
+  }));
 
   const serializedAssumptions = assumptions.map((a) => ({
     stage: a.stage as string,
@@ -71,10 +71,11 @@ export default async function SettingsPage() {
           currentUserId={session.user.id}
           initialUsers={serializedUsers}
           initialInvites={serializedInvites}
-        />
-        <FiscalConfigSection initialConfig={serializedConfig} year={year} />
+        >
+          <RolePermissionsCard />
+        </UserManagementSection>
+        <FiscalConfigSection initialConfigs={serializedConfigs} />
         <StageAssumptionsSection initialRows={serializedAssumptions} />
-        <RolePermissionsCard />
       </div>
     </div>
   );

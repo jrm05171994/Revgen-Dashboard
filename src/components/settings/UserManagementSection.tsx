@@ -24,6 +24,7 @@ type Props = {
   currentUserId: string;
   initialUsers: UserRow[];
   initialInvites: InviteRow[];
+  children?: React.ReactNode;
 };
 
 const ROLE_LABELS: Record<string, string> = {
@@ -40,7 +41,7 @@ const ROLE_COLORS: Record<string, string> = {
   OTHER:      "bg-gray-100 text-gray-600",
 };
 
-export function UserManagementSection({ currentUserId, initialUsers, initialInvites }: Props) {
+export function UserManagementSection({ currentUserId, initialUsers, initialInvites, children }: Props) {
   const [users, setUsers] = useState<UserRow[]>(initialUsers);
   const [invites, setInvites] = useState<InviteRow[]>(initialInvites);
   const [saving, setSaving] = useState<string | null>(null);
@@ -238,6 +239,8 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
           </table>
         </div>
       )}
+
+      {children}
     </div>
   );
 }

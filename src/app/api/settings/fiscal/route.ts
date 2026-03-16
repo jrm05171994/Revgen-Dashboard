@@ -19,14 +19,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ config });
 }
 
-type FiscalConfigBody = {
-  fiscalYear: number;
-  revenueGoal: number;
-  existingArr: number;
-  expectedFromExisting: number;
-  fiscalYearStart: string;
-  fiscalYearEnd: string;
-};
+type ConfigEntry = { fiscalYear: number; revenueGoal: number };
 
 export async function PATCH(req: Request) {
   const session = await auth();
@@ -34,35 +27,43 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const body = (await req.json()) as FiscalConfigBody;
-  const { fiscalYear, revenueGoal, existingArr, expectedFromExisting, fiscalYearStart, fiscalYearEnd } = body;
+  const body = (await req.json()) as { configs: ConfigEntry[] };
+  const { configs } = body;
 
-  if (!fiscalYear || revenueGoal == null || existingArr == null ||
-      expectedFromExisting == null || !fiscalYearStart || !fiscalYearEnd) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  if (!Array.isArray(configs) || configs.length === 0) {
+    return NextResponse.json({ error: "Missing configs array" }, { status: 400 });
   }
 
-  const data = {
-    revenueGoal: Math.round(revenueGoal * 100) / 100,
-    existingArr: Math.round(existingArr * 100) / 100,
-    expectedFromExisting: Math.round(expectedFromExisting * 100) / 100,
-    fiscalYearStart: new Date(fiscalYearStart),
-    fiscalYearEnd: new Date(fiscalYearEnd),
-  };
+  for (const c of configs) {
+    if (!c.fiscalYear || c.revenueGoal == null) {
+      return NextResponse.json({ error: "Each entry requires fiscalYear and revenueGoal" }, { status: 400 });
+    }
+  }
 
-  const config = await prisma.fiscalConfig.upsert({
-    where: { fiscalYear },
-    update: data,
-    create: { fiscalYear, ...data },
-  });
+  const results = await Promise.all(
+    configs.map((c) => {
+      const fiscalYearStart = new Date(`${c.fiscalYear}-01-01`);
+      const fiscalYearEnd = new Date(`${c.fiscalYear}-12-31`);
+      const data = {
+        revenueGoal: Math.round(c.revenueGoal * 100) / 100,
+        fiscalYearStart,
+        fiscalYearEnd,
+      };
+      return prisma.fiscalConfig.upsert({
+        where: { fiscalYear: c.fiscalYear },
+        update: data,
+        create: { fiscalYear: c.fiscalYear, existingArr: 0, expectedFromExisting: 0, ...data },
+      });
+    })
+  );
 
   await prisma.auditLog.create({
     data: {
       action: "FISCAL_CONFIG_UPDATED",
       userId: session.user.id,
-      details: { fiscalYear, revenueGoal, existingArr, expectedFromExisting },
+      details: { years: configs.map((c) => c.fiscalYear) },
     },
   });
 
-  return NextResponse.json({ config });
+  return NextResponse.json({ configs: results });
 }
