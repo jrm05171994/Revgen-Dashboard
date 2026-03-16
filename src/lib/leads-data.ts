@@ -133,8 +133,9 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
   const conversionRate = totalTracked > 0 ? convertedToFirstConvo / totalTracked : 0;
 
   // Avg days to first convo: company.attioCreatedAt → earliest deal.firstConvoDate
+  // Use ALL companies (not just converted) that have both attioCreatedAt and a deal with firstConvoDate
   const conversionTimes: number[] = [];
-  for (const company of convertedCompanies) {
+  for (const company of companies) {
     if (!company.attioCreatedAt) continue;
     const firstConvoDates = company.deals
       .filter((d) => d.firstConvoDate != null)
@@ -203,9 +204,9 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     .sort((a, b) => (STAGE_ORDER_MAP[a.key] ?? 9) - (STAGE_ORDER_MAP[b.key] ?? 9));
 
   // ── Pipeline Math Blueprint (pre-computed for default display) ───────────────
-  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 3_320_386);
-  const existingArr = Number(fiscalConfig?.existingArr ?? 1_200_000);
-  const expectedFromExisting = Number(fiscalConfig?.expectedFromExisting ?? existingArr);
+  const revenueGoal = Number(fiscalConfig?.revenueGoal ?? 0);
+  const existingArr = Number(fiscalConfig?.existingArr ?? 0);
+  const expectedFromExisting = Number(fiscalConfig?.expectedFromExisting ?? 0);
   const revenueToDate = Number(actualRevSum._sum.amount ?? 0);
   const fiscalYearEnd = fiscalConfig?.fiscalYearEnd
     ? new Date(fiscalConfig.fiscalYearEnd)

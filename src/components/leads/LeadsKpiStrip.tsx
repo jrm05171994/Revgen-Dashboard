@@ -18,7 +18,7 @@ export function LeadsKpiStrip({ data }: { data: LeadsData }) {
       <KpiCard
         label="Conversion Rate"
         value={formatPct(data.conversionRate)}
-        subValue="Lead → First Convo"
+        subValue="Lead → Opportunity Stage"
       />
       <KpiCard
         label="Avg Days to First Convo"

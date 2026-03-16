@@ -1,30 +1,16 @@
-import { Suspense } from "react";
 import { TopBar } from "@/components/layout/TopBar";
-import { YearSelector } from "@/components/dashboard/YearSelector";
 import { LeadsKpiStrip } from "@/components/leads/LeadsKpiStrip";
 import { PipelineBlueprintTable } from "@/components/leads/PipelineBlueprintTable";
 import { LeadsChartsSection } from "@/components/leads/LeadsChartsSection";
 import { getLeadsData } from "@/lib/leads-data";
 
-type Props = {
-  searchParams: { year?: string };
-};
-
-export default async function LeadsPage({ searchParams }: Props) {
-  const rawYear = parseInt(searchParams.year ?? "2026", 10);
-  const year = isNaN(rawYear) ? 2026 : rawYear;
+export default async function LeadsPage() {
+  const year = new Date().getFullYear();
   const data = await getLeadsData(year);
 
   return (
     <div>
-      <TopBar
-        title="Leads"
-        action={
-          <Suspense>
-            <YearSelector />
-          </Suspense>
-        }
-      />
+      <TopBar title="Leads" />
       <div className="p-6 space-y-6">
         <LeadsKpiStrip data={data} />
         <LeadsChartsSection
@@ -45,6 +31,7 @@ export default async function LeadsPage({ searchParams }: Props) {
           revenueToDate={data.revenueToDate}
           expectedFromExisting={data.expectedFromExisting}
           fiscalYearEnd={data.fiscalYearEnd}
+          defaultYear={year}
         />
       </div>
     </div>

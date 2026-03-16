@@ -24,6 +24,7 @@ type Props = {
   revenueToDate: number;
   expectedFromExisting: number;
   fiscalYearEnd: string;
+  defaultYear: number;
 };
 
 function computeBlueprint(
@@ -87,18 +88,30 @@ export function PipelineBlueprintTable({
   revenueToDate,
   expectedFromExisting,
   fiscalYearEnd,
+  defaultYear,
 }: Props) {
-  const defaultEndDateStr = fiscalYearEnd.substring(0, 10);
-  const [endDateStr, setEndDateStr]   = useState(defaultEndDateStr);
+  const [endDateStr, setEndDateStr]   = useState(fiscalYearEnd.substring(0, 10));
   const [gapOverride, setGapOverride] = useState<string>("");
+
+  const [selectedYear, setSelectedYear] = useState(defaultYear);
+  const [fetchedGoal, setFetchedGoal]   = useState<number | null>(null);
+  const [fetchedEnd, setFetchedEnd]     = useState<string | null>(null);
+  const [yearLoading, setYearLoading]   = useState(false);
+
+  const currentYear = defaultYear;
+  const YEAR_OPTIONS = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+
+  const defaultEndDateStr = (fetchedEnd ?? fiscalYearEnd).substring(0, 10);
 
   const { goalOverride, bookedOverride } = useScenario();
 
   const scenarioActive = goalOverride !== "" || bookedOverride !== "";
 
   const displayGoal = useMemo(
-    () => goalOverride !== "" ? (parseFloat(goalOverride) || revenueGoal) : revenueGoal,
-    [goalOverride, revenueGoal]
+    () => goalOverride !== ""
+      ? (parseFloat(goalOverride) || (fetchedGoal ?? revenueGoal))
+      : (fetchedGoal ?? revenueGoal),
+    [goalOverride, revenueGoal, fetchedGoal]
   );
 
   const scenarioBooked = useMemo(() => {
@@ -119,6 +132,36 @@ export function PipelineBlueprintTable({
     [assumptions, activeDeals, displayGap, avgDealSize, endDate]
   );
 
+  async function handleYearChange(year: number) {
+    setSelectedYear(year);
+    if (year === defaultYear) {
+      setFetchedGoal(null);
+      setFetchedEnd(null);
+      setEndDateStr(fiscalYearEnd.substring(0, 10));
+      return;
+    }
+    setYearLoading(true);
+    try {
+      const res = await fetch(`/api/settings/fiscal?year=${year}`);
+      const json = await res.json() as { config: { revenueGoal: number; fiscalYearEnd: string } | null };
+      if (json.config && json.config.revenueGoal > 0) {
+        setFetchedGoal(json.config.revenueGoal);
+        setEndDateStr(json.config.fiscalYearEnd.substring(0, 10));
+        setFetchedEnd(json.config.fiscalYearEnd);
+      } else {
+        // Fall back to current year's values
+        setFetchedGoal(null);
+        setFetchedEnd(null);
+        setEndDateStr(fiscalYearEnd.substring(0, 10));
+      }
+    } catch {
+      setFetchedGoal(null);
+      setFetchedEnd(null);
+    } finally {
+      setYearLoading(false);
+    }
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-1">
@@ -130,6 +173,22 @@ export function PipelineBlueprintTable({
             <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 uppercase tracking-wide">
               Scenario
             </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <select
+            value={selectedYear}
+            onChange={(e) => handleYearChange(Number(e.target.value))}
+            disabled={yearLoading}
+            className="border border-gray-200 rounded-lg px-2 py-1 text-xs text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-teal/40 disabled:opacity-50"
+          >
+            {YEAR_OPTIONS.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          {yearLoading && <span className="text-[10px] text-gray-400">Loading…</span>}
+          {selectedYear !== defaultYear && fetchedGoal === null && !yearLoading && (
+            <span className="text-[10px] text-amber-600">No config for {selectedYear} — using {defaultYear}</span>
           )}
         </div>
       </div>
