@@ -3,6 +3,7 @@ import { TopBar } from "@/components/layout/TopBar";
 import { UserManagementSection } from "@/components/settings/UserManagementSection";
 import { FiscalConfigSection } from "@/components/settings/FiscalConfigSection";
 import { StageAssumptionsSection } from "@/components/settings/StageAssumptionsSection";
+import { RolePermissionsCard } from "@/components/settings/RolePermissionsCard";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -75,6 +76,7 @@ export default async function SettingsPage() {
         />
         <FiscalConfigSection initialConfig={serializedConfig} year={year} />
         <StageAssumptionsSection initialRows={serializedAssumptions} />
+        <RolePermissionsCard />
       </div>
     </div>
   );
