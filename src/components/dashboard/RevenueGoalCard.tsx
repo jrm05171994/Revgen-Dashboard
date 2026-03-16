@@ -32,7 +32,7 @@ export function RevenueGoalCard({ data }: Props) {
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
               Revenue vs. Goal — FY{data.year}
             </h2>
-            <p className="text-xs text-gray-400 mt-0.5">Booked revenue vs. target</p>
+            <p className="text-xs text-gray-400 mt-0.5">Booked & planned revenue vs. target</p>
           </div>
           {scenarioActive && (
             <span className="ml-2 px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-700 uppercase tracking-wide">
