@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useScenario } from "@/lib/use-scenario";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { ExportButton } from "@/components/ui/ExportButton";
@@ -10,8 +10,7 @@ type Props = { data: DashboardData };
 
 export function RevenueGoalCard({ data }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [includeWeighted, setIncludeWeighted] = useState(false);
-  const { goalOverride, bookedOverride, setGoalOverride, setBookedOverride, clearAll } = useScenario();
+  const { goalOverride, bookedOverride, includeWeighted, setGoalOverride, setBookedOverride, setIncludeWeighted, clearAll } = useScenario();
 
   const displayGoal     = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
   const displayExpected = bookedOverride !== "" ? (parseFloat(bookedOverride) || data.expectedFromExisting) : data.expectedFromExisting;
