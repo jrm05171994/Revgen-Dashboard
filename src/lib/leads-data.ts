@@ -92,6 +92,7 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
           select: {
             id: true,
             firstConvoDate: true,
+            attioCreatedAt: true,
             source: true,
             value: true,
             stage: true,
@@ -128,24 +129,20 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
   );
   const convertedToFirstConvo = convertedCompanies.length;
 
-  // Conversion rate = converted / (leads + converted)
-  const totalTracked = totalLeads + convertedToFirstConvo;
-  const conversionRate = totalTracked > 0 ? convertedToFirstConvo / totalTracked : 0;
+  // Conversion rate = converted / total leads (opportunity+ / lead-stage companies)
+  const conversionRate = totalLeads > 0 ? convertedToFirstConvo / totalLeads : 0;
 
-  // Avg days to first convo: company.attioCreatedAt → earliest deal.firstConvoDate
-  // Use ALL companies (not just converted) that have both attioCreatedAt and a deal with firstConvoDate
+  // Avg days to first convo: deal.attioCreatedAt → deal.firstConvoDate
+  // Use all deals that have both fields populated
   const conversionTimes: number[] = [];
   for (const company of companies) {
-    if (!company.attioCreatedAt) continue;
-    const firstConvoDates = company.deals
-      .filter((d) => d.firstConvoDate != null)
-      .map((d) => new Date(d.firstConvoDate!));
-    if (firstConvoDates.length === 0) continue;
-    const earliest = firstConvoDates.reduce((a, b) => (a < b ? a : b));
-    const days = Math.floor(
-      (earliest.getTime() - new Date(company.attioCreatedAt).getTime()) / 86400000
-    );
-    if (days >= 0) conversionTimes.push(days);
+    for (const deal of company.deals) {
+      if (!deal.firstConvoDate || !deal.attioCreatedAt) continue;
+      const days = Math.floor(
+        (new Date(deal.firstConvoDate).getTime() - new Date(deal.attioCreatedAt).getTime()) / 86400000
+      );
+      if (days >= 0) conversionTimes.push(days);
+    }
   }
   const avgDaysToFirstConvo =
     conversionTimes.length > 0

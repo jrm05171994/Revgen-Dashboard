@@ -24,12 +24,29 @@ export type PipelineData = {
   stageAssumptions: { stage: string; overallCloseRate: number }[];
 };
 
+const STAGE_SORT = ["first_convo", "opp_qual", "stakeholder", "verbal", "contracting"];
+
 function toEntries(
   map: Record<string, { value: number; count: number }>
 ): BreakdownEntry[] {
   return Object.entries(map)
     .map(([key, v]) => ({ key, ...v }))
     .sort((a, b) => b.value - a.value);
+}
+
+function toStageEntries(
+  map: Record<string, { value: number; count: number }>
+): BreakdownEntry[] {
+  return Object.entries(map)
+    .map(([key, v]) => ({ key, ...v }))
+    .sort((a, b) => {
+      const ai = STAGE_SORT.indexOf(a.key);
+      const bi = STAGE_SORT.indexOf(b.key);
+      if (ai === -1 && bi === -1) return 0;
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
 }
 
 export async function getPipelineData(): Promise<PipelineData> {
@@ -135,7 +152,7 @@ export async function getPipelineData(): Promise<PipelineData> {
   return {
     pipelineTotal, activeDealCount, avgDealSize, weightedForecast: forecast,
     winRateTtm, avgSalesCycleDays,
-    byStage: toEntries(byStageMap),
+    byStage: toStageEntries(byStageMap),
     bySource: toEntries(bySourceMap),
     byCompanyType: toEntries(byCompanyTypeMap),
     byDealType: toEntries(byDealTypeMap),
