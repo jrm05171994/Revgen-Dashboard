@@ -4,7 +4,7 @@ import type { PipelineData } from "@/lib/pipeline-data";
 
 export function PipelineKpiStrip({ data }: { data: PipelineData }) {
   return (
-    <div className="grid grid-cols-6 gap-4">
+    <div className="grid grid-cols-5 gap-4">
       <KpiCard label="Total Pipeline" value={formatCurrency(data.pipelineTotal)} />
       <KpiCard label="Active Deals" value={String(data.activeDealCount)} />
       <KpiCard label="Avg Deal Size" value={formatCurrency(data.avgDealSize)} />
