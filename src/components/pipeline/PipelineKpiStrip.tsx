@@ -8,7 +8,6 @@ export function PipelineKpiStrip({ data }: { data: PipelineData }) {
       <KpiCard label="Total Pipeline" value={formatCurrency(data.pipelineTotal)} />
       <KpiCard label="Active Deals" value={String(data.activeDealCount)} />
       <KpiCard label="Avg Deal Size" value={formatCurrency(data.avgDealSize)} />
-      <KpiCard label="Weighted Forecast" value={formatCurrency(data.weightedForecast)} />
       <KpiCard label="Win Rate (TTM)" value={formatPct(data.winRateTtm)} />
       <KpiCard
         label="Avg Sales Cycle"
