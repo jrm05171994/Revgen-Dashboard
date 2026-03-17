@@ -1,18 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import type { DealRow } from "@/components/ui/DealTable";
+import type { WeightedForecastDeal } from "@/lib/compute-adjusted-forecast";
 export type { BreakdownEntry } from "@/lib/format";
-
-export type WeightedForecastDeal = {
-  id: string;
-  name: string;
-  companyName: string | null;
-  stage: string;
-  value: number;
-  closeRate: number;
-  expectedClosedDate: string;
-  timingFactor: number;
-  contribution: number;
-};
+export type { WeightedForecastDeal } from "@/lib/compute-adjusted-forecast";
 
 export type DashboardData = {
   // KPIs

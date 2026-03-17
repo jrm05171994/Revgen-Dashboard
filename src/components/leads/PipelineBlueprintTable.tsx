@@ -3,6 +3,8 @@
 import { useState, useMemo } from "react";
 import { formatCurrency, STAGE_LABELS } from "@/lib/format";
 import type { BlueprintRow, SerializedAssumption, BlueprintDeal } from "@/lib/leads-data";
+import type { WeightedForecastDeal } from "@/lib/compute-adjusted-forecast";
+import { computeAdjustedForecast } from "@/lib/compute-adjusted-forecast";
 import { useScenario } from "@/lib/use-scenario";
 
 const ACTIVE_STAGES = [
@@ -25,6 +27,7 @@ type Props = {
   expectedFromExisting: number;
   fiscalYearEnd: string;
   defaultYear: number;
+  weightedForecastBreakdown: WeightedForecastDeal[];
 };
 
 function computeBlueprint(
@@ -89,6 +92,7 @@ export function PipelineBlueprintTable({
   expectedFromExisting,
   fiscalYearEnd,
   defaultYear,
+  weightedForecastBreakdown,
 }: Props) {
   const [endDateStr, setEndDateStr]   = useState(fiscalYearEnd.substring(0, 10));
   const [gapOverride, setGapOverride] = useState<string>("");
@@ -103,9 +107,9 @@ export function PipelineBlueprintTable({
 
   const defaultEndDateStr = (fetchedEnd ?? fiscalYearEnd).substring(0, 10);
 
-  const { goalOverride, bookedOverride } = useScenario();
+  const { goalOverride, bookedOverride, includeWeighted, dealOverrides, closeRateModifier, timingModifier, isWhatIfActive } = useScenario();
 
-  const scenarioActive = goalOverride !== "" || bookedOverride !== "";
+  const scenarioActive = goalOverride !== "" || bookedOverride !== "" || includeWeighted || isWhatIfActive;
 
   const displayGoal = useMemo(
     () => goalOverride !== ""
@@ -119,9 +123,15 @@ export function PipelineBlueprintTable({
     return revenueToDate + displayExpected;
   }, [bookedOverride, revenueToDate, expectedFromExisting]);
 
+  // When "Include Weighted Pipeline" is on, subtract adjusted forecast from the gap
+  const adjustedWeightedForecast = useMemo(() => {
+    if (!includeWeighted || weightedForecastBreakdown.length === 0) return 0;
+    return computeAdjustedForecast(weightedForecastBreakdown, dealOverrides, closeRateModifier, timingModifier, defaultYear).total;
+  }, [includeWeighted, weightedForecastBreakdown, dealOverrides, closeRateModifier, timingModifier, defaultYear]);
+
   const scenarioGap = useMemo(
-    () => Math.max(0, displayGoal - scenarioBooked),
-    [displayGoal, scenarioBooked]
+    () => Math.max(0, displayGoal - scenarioBooked - adjustedWeightedForecast),
+    [displayGoal, scenarioBooked, adjustedWeightedForecast]
   );
 
   const endDate = useMemo(() => new Date(endDateStr + "T23:59:59"), [endDateStr]);
@@ -224,6 +234,9 @@ export function PipelineBlueprintTable({
         <div className="flex flex-col gap-1">
           <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Revenue Gap</span>
           <span className="text-base font-extrabold text-coral">{formatCurrency(displayGap)}</span>
+          {includeWeighted && adjustedWeightedForecast > 0 && (
+            <span className="text-[10px] text-teal">weighted pipeline included</span>
+          )}
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Revenue Goal</span>

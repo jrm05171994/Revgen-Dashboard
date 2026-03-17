@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { DealStatus, CompanyStage } from "@prisma/client";
 import type { BreakdownEntry } from "@/lib/format";
+import type { WeightedForecastDeal } from "@/lib/compute-adjusted-forecast";
 
 const ACTIVE_STAGES = [
   "first_convo",
@@ -67,6 +68,7 @@ export type LeadsData = {
   expectedFromExisting: number;
   fiscalYearEnd: string;
   year: number;
+  weightedForecastBreakdown: WeightedForecastDeal[];
   companiesBySource: Record<string, LeadCompanyRow[]>;
   companiesByTier: Record<string, LeadCompanyRow[]>;
   companiesByStage: Record<string, LeadCompanyRow[]>;
@@ -103,7 +105,11 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     }),
     prisma.deal.findMany({
       where: { status: { in: ["active", "stalled"] as DealStatus[] } },
-      select: { id: true, value: true, stage: true, source: true },
+      select: {
+        id: true, value: true, stage: true, source: true,
+        name: true, expectedClosedDate: true,
+        company: { select: { name: true } },
+      },
     }),
     prisma.stageAssumption.findMany(),
     prisma.fiscalConfig.findFirst({ where: { fiscalYear: year } }),
@@ -295,6 +301,35 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     stage: d.stage as string | null,
   }));
 
+  // ── Weighted forecast breakdown (same logic as getDashboardData) ─────────────
+  const fiscalYearStart = new Date(`${year}-01-01T00:00:00`);
+  const fiscalYearEndDate = new Date(`${year}-12-31T23:59:59`);
+  const yearMs = fiscalYearEndDate.getTime() - fiscalYearStart.getTime();
+  const rateMap = new Map(assumptions.map((a) => [a.stage as string, a.overallCloseRate]));
+
+  const weightedForecastBreakdown: WeightedForecastDeal[] = [];
+  for (const deal of activeDeals) {
+    if (!deal.expectedClosedDate || !deal.stage || !deal.value) continue;
+    const closeDate = new Date(deal.expectedClosedDate);
+    if (closeDate < fiscalYearStart || closeDate > fiscalYearEndDate) continue;
+    const closeRate = rateMap.get(deal.stage as string) ?? 0;
+    const remainingMs = Math.max(0, fiscalYearEndDate.getTime() - closeDate.getTime());
+    const timingFactor = yearMs > 0 ? remainingMs / yearMs : 0;
+    const contribution = Number(deal.value) * closeRate * timingFactor;
+    weightedForecastBreakdown.push({
+      id: deal.id,
+      name: deal.name,
+      companyName: deal.company?.name ?? null,
+      stage: deal.stage as string,
+      value: Number(deal.value),
+      closeRate,
+      expectedClosedDate: deal.expectedClosedDate.toISOString(),
+      timingFactor,
+      contribution,
+    });
+  }
+  weightedForecastBreakdown.sort((a, b) => b.contribution - a.contribution);
+
   return {
     totalLeads, convertedToFirstConvo, conversionRate, avgDaysToFirstConvo,
     bySource, byTier, byStage,
@@ -303,6 +338,7 @@ export async function getLeadsData(year = 2026): Promise<LeadsData> {
     revenueGoal, revenueGap, existingArr, revenueToDate, expectedFromExisting,
     fiscalYearEnd: fiscalYearEnd.toISOString(),
     year,
+    weightedForecastBreakdown,
     companiesBySource,
     companiesByTier,
     companiesByStage,

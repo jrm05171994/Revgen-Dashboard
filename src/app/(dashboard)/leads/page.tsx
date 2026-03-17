@@ -32,6 +32,7 @@ export default async function LeadsPage() {
           expectedFromExisting={data.expectedFromExisting}
           fiscalYearEnd={data.fiscalYearEnd}
           defaultYear={year}
+          weightedForecastBreakdown={data.weightedForecastBreakdown}
         />
       </div>
     </div>

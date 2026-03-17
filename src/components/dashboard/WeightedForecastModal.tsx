@@ -1,38 +1,124 @@
 // src/components/dashboard/WeightedForecastModal.tsx
 "use client";
 
+import { useMemo } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { formatCurrency, formatPct } from "@/lib/format";
-import type { WeightedForecastDeal } from "@/lib/dashboard-data";
+import { useScenario } from "@/lib/use-scenario";
+import { computeAdjustedForecast } from "@/lib/compute-adjusted-forecast";
+import type { WeightedForecastDeal } from "@/lib/compute-adjusted-forecast";
 
 const STAGE_LABELS: Record<string, string> = {
-  first_convo: "First Convo",
-  opp_qual: "Opp Qual",
-  stakeholder: "Stakeholder",
-  verbal: "Verbal",
-  contracting: "Contracting",
+  first_convo:  "First Convo",
+  opp_qual:     "Opp Qual",
+  stakeholder:  "Stakeholder",
+  verbal:       "Verbal",
+  contracting:  "Contracting",
 };
 
 type Props = {
   open: boolean;
   onClose: () => void;
   deals: WeightedForecastDeal[];
-  total: number;
+  total: number; // unadjusted total
   year: number;
 };
 
-export function WeightedForecastModal({ open, onClose, deals, total, year }: Props) {
+function ModifierInput({
+  label, value, onChange, hint,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  hint: string;
+}) {
   return (
-    <Modal open={open} onClose={onClose} title={`Weighted Forecast — FY${year}`} width="xl">
-      {/* Formula explanation */}
-      <div className="mb-5 p-3 bg-gray-50 rounded-lg text-xs text-gray-500 leading-relaxed">
-        <span className="font-semibold text-navy">Formula: </span>
-        Deal Value × Stage Close Rate × Timing Factor
-        <span className="ml-2 text-gray-400">
-          (Timing Factor = months remaining after expected close ÷ months in fiscal year.
-          Only deals with an expected close date within FY{year} are included.)
-        </span>
+    <div className="flex flex-col gap-1">
+      <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+        {label}
+      </label>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          value={value === 0 ? "" : value}
+          onChange={(e) => {
+            const v = e.target.value === "" ? 0 : parseFloat(e.target.value);
+            onChange(isNaN(v) ? 0 : v);
+          }}
+          placeholder="0"
+          className="w-20 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+        />
+        <span className="text-sm text-gray-500">%</span>
       </div>
+      <p className="text-[10px] text-gray-400 max-w-[220px] leading-snug">{hint}</p>
+    </div>
+  );
+}
+
+export function WeightedForecastModal({ open, onClose, deals, total, year }: Props) {
+  const {
+    dealOverrides, closeRateModifier, timingModifier,
+    setDealOverride, setCloseRateModifier, setTimingModifier, resetWhatIf, isWhatIfActive,
+  } = useScenario();
+
+  const { deals: adjusted, total: adjustedTotal } = useMemo(
+    () => computeAdjustedForecast(deals, dealOverrides, closeRateModifier, timingModifier, year),
+    [deals, dealOverrides, closeRateModifier, timingModifier, year],
+  );
+
+  const hasChanges = isWhatIfActive;
+  const delta = adjustedTotal - total;
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Weighted Forecast — FY${year}`} width="2xl">
+
+      {/* Global modifiers */}
+      <div className="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
+        <div className="flex flex-wrap items-start gap-8">
+          <ModifierInput
+            label="Close Rate Modifier (%)"
+            value={closeRateModifier}
+            onChange={setCloseRateModifier}
+            hint="+20 raises all close rates by 20% (×1.2). −20 lowers them by 20% (×0.8)."
+          />
+          <ModifierInput
+            label="Timing Factor Modifier (%)"
+            value={timingModifier}
+            onChange={setTimingModifier}
+            hint="+20 delays all closes by 20%, reducing in-year contribution. −20 accelerates closes, increasing contribution."
+          />
+          <div className="flex flex-col justify-end gap-1 ml-auto self-end">
+            <div>
+              <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Adjusted Total</p>
+              <p className={`text-xl font-extrabold ${hasChanges ? "text-teal" : "text-navy"}`}>
+                {formatCurrency(adjustedTotal)}
+              </p>
+              {hasChanges && (
+                <p className={`text-xs font-medium mt-0.5 ${delta >= 0 ? "text-green" : "text-coral"}`}>
+                  {delta >= 0 ? "+" : ""}{formatCurrency(delta)} vs actual
+                </p>
+              )}
+            </div>
+            {hasChanges && (
+              <button
+                onClick={resetWhatIf}
+                className="mt-2 text-xs font-semibold text-gray-400 hover:text-navy transition-colors"
+              >
+                Reset all overrides
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Formula note */}
+      <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+        <span className="font-semibold text-navy">Formula: </span>
+        Deal Value × Stage Close Rate × Timing Factor.
+        Timing Factor = months remaining after expected close ÷ months in FY{year}.
+        Only deals with an expected close date within FY{year} are included.
+        Custom close dates override the timing modifier for that deal.
+      </p>
 
       {deals.length === 0 ? (
         <p className="text-sm text-gray-400 text-center py-8">
@@ -43,54 +129,134 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                <th className="pb-2 pr-2 w-8">Excl.</th>
                 <th className="pb-2 pr-4">Deal</th>
                 <th className="pb-2 pr-4">Stage</th>
                 <th className="pb-2 pr-4">Exp. Close</th>
                 <th className="pb-2 pr-4 text-right">Value</th>
                 <th className="pb-2 pr-4 text-right">Close Rate</th>
-                <th className="pb-2 pr-4 text-right">Timing Factor</th>
+                <th className="pb-2 pr-4 text-right">Timing</th>
                 <th className="pb-2 text-right">Contribution</th>
               </tr>
             </thead>
             <tbody>
-              {deals.map((d) => (
-                <tr key={d.id} className="border-b last:border-0 hover:bg-gray-50">
-                  <td className="py-2 pr-4">
-                    <p className="font-medium text-navy">{d.name}</p>
-                    {d.companyName && (
-                      <p className="text-xs text-gray-400">{d.companyName}</p>
-                    )}
-                  </td>
-                  <td className="py-2 pr-4 text-gray-600">
-                    {STAGE_LABELS[d.stage] ?? d.stage}
-                  </td>
-                  <td className="py-2 pr-4 text-gray-500 text-xs whitespace-nowrap">
-                    {new Date(d.expectedClosedDate).toLocaleDateString("en-US", {
-                      month: "short", day: "numeric", year: "numeric",
-                    })}
-                  </td>
-                  <td className="py-2 pr-4 text-right text-gray-700">
-                    {formatCurrency(d.value)}
-                  </td>
-                  <td className="py-2 pr-4 text-right text-gray-700">
-                    {formatPct(d.closeRate)}
-                  </td>
-                  <td className="py-2 pr-4 text-right text-gray-700">
-                    {formatPct(d.timingFactor)}
-                  </td>
-                  <td className="py-2 text-right font-semibold text-navy">
-                    {formatCurrency(d.contribution)}
-                  </td>
-                </tr>
-              ))}
+              {adjusted.map((d) => {
+                const override = dealOverrides[d.id] ?? {};
+                const origDate = d.expectedClosedDate.slice(0, 10);
+                const closeRateChanged = Math.abs(d.adjustedCloseRate - d.closeRate) > 0.0001;
+                const timingChanged    = Math.abs(d.adjustedTimingFactor - d.timingFactor) > 0.0001;
+                const contribChanged   = Math.abs(d.adjustedContribution - d.contribution) > 0.01;
+
+                return (
+                  <tr
+                    key={d.id}
+                    className={`border-b last:border-0 ${d.excluded ? "opacity-40" : "hover:bg-gray-50"}`}
+                  >
+                    {/* Exclude checkbox */}
+                    <td className="py-2 pr-2">
+                      <input
+                        type="checkbox"
+                        checked={override.excluded === true}
+                        onChange={(e) => setDealOverride(d.id, { excluded: e.target.checked || null })}
+                        className="w-3.5 h-3.5 accent-coral"
+                        title="Exclude from forecast"
+                      />
+                    </td>
+
+                    {/* Deal name */}
+                    <td className="py-2 pr-4">
+                      <p className="font-medium text-navy leading-tight">{d.name}</p>
+                      {d.companyName && <p className="text-xs text-gray-400">{d.companyName}</p>}
+                    </td>
+
+                    {/* Stage */}
+                    <td className="py-2 pr-4 text-gray-600 text-xs whitespace-nowrap">
+                      {STAGE_LABELS[d.stage] ?? d.stage}
+                    </td>
+
+                    {/* Expected close date — editable */}
+                    <td className="py-2 pr-4">
+                      <input
+                        type="date"
+                        value={override.dateOverride ?? origDate}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setDealOverride(d.id, { dateOverride: (!val || val === origDate) ? null : val });
+                        }}
+                        className={`w-32 px-1.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-teal/40 ${
+                          d.hasDateOverride ? "border-teal text-teal font-semibold" : "border-gray-200 text-gray-700"
+                        }`}
+                      />
+                    </td>
+
+                    {/* Value — editable */}
+                    <td className="py-2 pr-4 text-right">
+                      <input
+                        type="number"
+                        value={override.valueOverride ?? ""}
+                        placeholder={String(Math.round(d.value))}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const n = val === "" ? null : parseFloat(val);
+                          setDealOverride(d.id, { valueOverride: n && n > 0 ? n : null });
+                        }}
+                        className={`w-28 px-1.5 py-1 text-xs text-right border rounded-md focus:outline-none focus:ring-2 focus:ring-teal/40 ${
+                          d.hasValueOverride ? "border-teal text-teal font-semibold" : "border-gray-200 text-gray-700"
+                        }`}
+                      />
+                    </td>
+
+                    {/* Close rate */}
+                    <td className="py-2 pr-4 text-right">
+                      <p className={`${closeRateChanged ? "text-teal font-semibold" : "text-gray-700"}`}>
+                        {formatPct(d.adjustedCloseRate)}
+                      </p>
+                      {closeRateChanged && (
+                        <p className="text-[10px] text-gray-400 line-through">{formatPct(d.closeRate)}</p>
+                      )}
+                    </td>
+
+                    {/* Timing factor */}
+                    <td className="py-2 pr-4 text-right">
+                      <p className={`${timingChanged ? "text-teal font-semibold" : "text-gray-700"}`}>
+                        {formatPct(d.adjustedTimingFactor)}
+                      </p>
+                      {timingChanged && (
+                        <p className="text-[10px] text-gray-400 line-through">{formatPct(d.timingFactor)}</p>
+                      )}
+                    </td>
+
+                    {/* Contribution */}
+                    <td className="py-2 text-right">
+                      {d.excluded ? (
+                        <p className="text-gray-400 line-through text-xs">{formatCurrency(d.contribution)}</p>
+                      ) : (
+                        <>
+                          <p className={`font-semibold ${contribChanged ? "text-teal" : "text-navy"}`}>
+                            {formatCurrency(d.adjustedContribution)}
+                          </p>
+                          {contribChanged && (
+                            <p className="text-[10px] text-gray-400 line-through">{formatCurrency(d.contribution)}</p>
+                          )}
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-gray-200">
-                <td colSpan={6} className="pt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Total Weighted Forecast
+                <td colSpan={7} className="pt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {hasChanges ? "Adjusted Weighted Forecast" : "Total Weighted Forecast"}
                 </td>
-                <td className="pt-3 text-right text-lg font-extrabold text-navy">
-                  {formatCurrency(total)}
+                <td className="pt-3 text-right">
+                  <p className={`text-lg font-extrabold ${hasChanges ? "text-teal" : "text-navy"}`}>
+                    {formatCurrency(adjustedTotal)}
+                  </p>
+                  {hasChanges && (
+                    <p className="text-[10px] text-gray-400 line-through">{formatCurrency(total)}</p>
+                  )}
                 </td>
               </tr>
             </tfoot>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useScenario } from "@/lib/use-scenario";
+import { computeAdjustedForecast } from "@/lib/compute-adjusted-forecast";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { ExportButton } from "@/components/ui/ExportButton";
 import type { DashboardData } from "@/lib/dashboard-data";
@@ -10,15 +11,22 @@ type Props = { data: DashboardData };
 
 export function RevenueGoalCard({ data }: Props) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const { goalOverride, bookedOverride, includeWeighted, setGoalOverride, setBookedOverride, setIncludeWeighted, clearAll } = useScenario();
+  const { goalOverride, bookedOverride, includeWeighted, dealOverrides, closeRateModifier, timingModifier, isWhatIfActive, setGoalOverride, setBookedOverride, setIncludeWeighted, clearAll } = useScenario();
+
+  const adjustedWeightedForecast = useMemo(() => {
+    if (!isWhatIfActive) return data.weightedForecast;
+    return computeAdjustedForecast(
+      data.weightedForecastBreakdown, dealOverrides, closeRateModifier, timingModifier, data.year,
+    ).total;
+  }, [data, dealOverrides, closeRateModifier, timingModifier, isWhatIfActive]);
 
   const displayGoal     = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
   const displayExpected = bookedOverride !== "" ? (parseFloat(bookedOverride) || data.expectedFromExisting) : data.expectedFromExisting;
   const displayBooked   = data.revenueToDate + displayExpected;
-  const effectiveBooked = includeWeighted ? displayBooked + data.weightedForecast : displayBooked;
+  const effectiveBooked = includeWeighted ? displayBooked + adjustedWeightedForecast : displayBooked;
   const displayGap      = Math.max(0, displayGoal - effectiveBooked);
   const displayPct      = displayGoal > 0 ? effectiveBooked / displayGoal : 0;
-  const forecastPct     = displayGoal > 0 ? data.weightedForecast / displayGoal : 0;
+  const forecastPct     = displayGoal > 0 ? adjustedWeightedForecast / displayGoal : 0;
   const scenarioActive  = goalOverride !== "" || bookedOverride !== "";
 
   // Booked segment always based on displayBooked (not effectiveBooked) so forecast stays visually separate.
@@ -103,7 +111,7 @@ export function RevenueGoalCard({ data }: Props) {
         </div>
         <div>
           <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Weighted Forecast</p>
-          <p className="text-base font-extrabold text-teal">{formatCurrency(data.weightedForecast)}</p>
+          <p className="text-base font-extrabold text-teal">{formatCurrency(adjustedWeightedForecast)}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">in-year pipeline contribution</p>
         </div>
         <div>

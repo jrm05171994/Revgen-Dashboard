@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { KpiCard } from "@/components/ui/KpiCard";
 import { WeightedForecastModal } from "@/components/dashboard/WeightedForecastModal";
 import { formatCurrency, formatDelta } from "@/lib/format";
 import { useScenario } from "@/lib/use-scenario";
+import { computeAdjustedForecast } from "@/lib/compute-adjusted-forecast";
 import type { DashboardData } from "@/lib/dashboard-data";
 
 function coverageFlag(coverage: number): "green" | "yellow" | "orange" | "red" {
@@ -18,7 +19,15 @@ export function DashboardKpiStrip({ data }: { data: DashboardData }) {
   const [forecastModalOpen, setForecastModalOpen] = useState(false);
   const pipelineDelta = data.pipelineTotalDelta != null ? formatDelta(data.pipelineTotalDelta) : null;
 
-  const { goalOverride, bookedOverride } = useScenario();
+  const { goalOverride, bookedOverride, dealOverrides, closeRateModifier, timingModifier, isWhatIfActive } = useScenario();
+
+  const adjustedWeightedForecast = useMemo(() => {
+    if (!isWhatIfActive) return data.weightedForecast;
+    return computeAdjustedForecast(
+      data.weightedForecastBreakdown, dealOverrides, closeRateModifier, timingModifier, data.year,
+    ).total;
+  }, [data, dealOverrides, closeRateModifier, timingModifier, isWhatIfActive]);
+
   const displayExpected = bookedOverride !== "" ? (parseFloat(bookedOverride) || data.expectedFromExisting) : data.expectedFromExisting;
   const displayBooked   = data.revenueToDate + displayExpected;
   const displayGoal     = goalOverride !== "" ? (parseFloat(goalOverride) || data.revenueGoal) : data.revenueGoal;
@@ -39,8 +48,8 @@ export function DashboardKpiStrip({ data }: { data: DashboardData }) {
         >
           <KpiCard
             label="Weighted Forecast"
-            value={formatCurrency(data.weightedForecast)}
-            subValue="Click for breakdown →"
+            value={formatCurrency(adjustedWeightedForecast)}
+            subValue={isWhatIfActive ? "what-if view — click to edit" : "Click for breakdown →"}
           />
         </div>
         <KpiCard
