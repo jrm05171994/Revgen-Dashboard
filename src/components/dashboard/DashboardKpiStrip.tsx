@@ -49,7 +49,7 @@ export function DashboardKpiStrip({ data }: { data: DashboardData }) {
           <KpiCard
             label="Weighted Forecast"
             value={formatCurrency(adjustedWeightedForecast)}
-            subValue={isWhatIfActive ? "what-if view — click to edit" : "Click for breakdown →"}
+            subValue={isWhatIfActive ? "what-if view — click to edit" : "Click for breakdown & what-if analysis →"}
           />
         </div>
         <KpiCard
