@@ -115,8 +115,12 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
       <p className="text-xs text-gray-400 mb-4 leading-relaxed">
         <span className="font-semibold text-navy">Formula: </span>
         Deal Value × Stage Close Rate × Timing Factor.
-        Timing Factor = months remaining after expected close ÷ months in FY{year}.
+        Timing Factor = months remaining after expected close + implementation period ÷ months in FY{year}.
+
+        Implementation period is assumed to be 60 days.
+        
         Only deals with an expected close date within FY{year} are included.
+        
         Custom close dates override the timing modifier for that deal.
       </p>
 
