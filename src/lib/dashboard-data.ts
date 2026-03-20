@@ -79,7 +79,9 @@ export async function getDashboardData(comparisonDays: number, year: number): Pr
     const closeDate = new Date(deal.expectedClosedDate);
     if (closeDate < fiscalYearStart || closeDate > fiscalYearEnd) return sum;
     const closeRate = rateMap.get(deal.stage as string) ?? 0;
-    const remainingMs = Math.max(0, fiscalYearEnd.getTime() - closeDate.getTime());
+    // Add 60-day implementation period: revenue starts 60 days after close date
+    const revenueStartDate = new Date(closeDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+    const remainingMs = Math.max(0, fiscalYearEnd.getTime() - revenueStartDate.getTime());
     const timingFactor = yearMs > 0 ? remainingMs / yearMs : 0;
     const contribution = Number(deal.value) * closeRate * timingFactor;
     weightedForecastBreakdown.push({

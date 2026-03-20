@@ -70,10 +70,12 @@ export function computeAdjustedForecast(
     let adjustedTimingFactor: number;
     if (hasDateOverride) {
       const customDate = new Date(override.dateOverride! + "T00:00:00");
-      if (customDate < fiscalYearStart || customDate > fiscalYearEnd) {
+      // Add 60-day implementation period: revenue starts 60 days after close date
+      const revenueStartDate = new Date(customDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+      if (customDate < fiscalYearStart) {
         adjustedTimingFactor = 0;
       } else {
-        const remainingMs = Math.max(0, fiscalYearEnd.getTime() - customDate.getTime());
+        const remainingMs = Math.max(0, fiscalYearEnd.getTime() - revenueStartDate.getTime());
         adjustedTimingFactor = yearMs > 0 ? remainingMs / yearMs : 0;
       }
     } else {
