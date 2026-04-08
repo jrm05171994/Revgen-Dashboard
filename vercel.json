@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/sync/attio",
-      "schedule": "0 8 * * *"
+      "schedule": "0 11 * * *"
     },
     {
       "path": "/api/sync/sheets",
