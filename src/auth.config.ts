@@ -21,7 +21,8 @@ export const authConfig: NextAuthConfig = {
       const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
       const isCronRoute =
         nextUrl.pathname.startsWith("/api/sync") ||
-        nextUrl.pathname.startsWith("/api/snapshot");
+        nextUrl.pathname.startsWith("/api/snapshot") ||
+        nextUrl.pathname.startsWith("/api/board-export");
 
       if (isApiAuthRoute || isCronRoute) return true;
       if (isAuthRoute) {
