@@ -85,21 +85,21 @@ export async function getPipelineData(): Promise<PipelineData> {
   const ttmWon = ttmClosed.filter((d) => d.status === "won").length;
   const winRateTtm = ttmClosed.length > 0 ? ttmWon / ttmClosed.length : 0;
 
-  // Avg sales cycle TTM (first_convo_date → closed_won_date)
-  const wonWithDates = deals.filter(
-    (d) => d.status === "won" && d.firstConvoDate && d.closedWonDate &&
-      new Date(d.closedWonDate) >= ttmStart
-  );
-  const avgSalesCycleDays = wonWithDates.length > 0
-    ? Math.round(
-        wonWithDates.reduce((s, d) => {
-          const days =
-            (new Date(d.closedWonDate!).getTime() - new Date(d.firstConvoDate!).getTime()) /
-            86400000;
-          return s + days;
-        }, 0) / wonWithDates.length
-      )
-    : 0;
+  // Avg sales cycle TTM (first_convo_date → closed_won_date).
+  // Skip records where the manual close_date predates the stage-history
+  // First Conversation entry — that's data hygiene noise (backfilled close_date
+  // or a re-opened deal), not a real negative-length sale.
+  const wonCycles = deals.flatMap((d) => {
+    if (d.status !== "won" || !d.firstConvoDate || !d.closedWonDate) return [];
+    if (new Date(d.closedWonDate) < ttmStart) return [];
+    const days =
+      (new Date(d.closedWonDate).getTime() - new Date(d.firstConvoDate).getTime()) / 86400000;
+    return days >= 0 ? [days] : [];
+  });
+  const avgSalesCycleDays =
+    wonCycles.length > 0
+      ? Math.round(wonCycles.reduce((s, d) => s + d, 0) / wonCycles.length)
+      : 0;
 
   // Breakdowns (active deals only)
   const byStageMap: Record<string, { value: number; count: number }> = {};
