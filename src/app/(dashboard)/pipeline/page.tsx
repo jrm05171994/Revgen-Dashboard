@@ -8,7 +8,7 @@ export default async function PipelinePage() {
   return (
     <div>
       <TopBar title="Pipeline" exportId="export-content" />
-      <div id="export-content" className="p-6">
+      <div id="export-content" className="p-6 space-y-8">
         <PipelineClientSection data={data} />
       </div>
     </div>
