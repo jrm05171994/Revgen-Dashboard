@@ -32,18 +32,18 @@ export function Modal({ open, onClose, title, children, width = "lg" }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
       <div
-        className={`relative bg-white rounded-2xl shadow-xl w-full ${WIDTH_CLASSES[width]} mx-4 max-h-[90vh] flex flex-col`}
+        className={`relative bg-white rounded-card shadow-2xl ring-1 ring-slate-200 w-full ${WIDTH_CLASSES[width]} mx-4 max-h-[90vh] flex flex-col`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <h2 className="text-lg font-semibold text-navy">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-bold text-navy tracking-tight">{title}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="overflow-y-auto flex-1 px-6 py-4">{children}</div>
+        <div className="overflow-y-auto flex-1 px-6 py-5">{children}</div>
       </div>
     </div>
   );
