@@ -45,35 +45,35 @@ export function SnapshotPanel({ onReady }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+    <div className="bg-white rounded-card shadow-card p-6 mb-6">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
         Cohort Waterfall Analysis
       </h2>
-      <p className="text-xs text-gray-400 mb-4">
+      <p className="text-xs text-slate-500 mb-4">
         Select two dates to compare. The snapshot reconstructs each deal&apos;s pipeline stage as of
         that date using Attio&apos;s attribute history. This may take 15–30 seconds.
       </p>
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-1">
-          <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
             Date A (baseline)
           </label>
           <input
             type="date"
             value={dateA}
             onChange={(e) => setDateA(e.target.value)}
-            className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+            className="w-36 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
             Date B (comparison)
           </label>
           <input
             type="date"
             value={dateB}
             onChange={(e) => setDateB(e.target.value)}
-            className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+            className="w-36 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
           />
         </div>
         <button
@@ -84,7 +84,7 @@ export function SnapshotPanel({ onReady }: Props) {
           {loading ? "Generating…" : "Generate Analysis"}
         </button>
       </div>
-      <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+      <p className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-card px-3 py-2">
         Date A must be the earlier (older) date — the analysis shows how the Date A cohort progressed by Date B.
       </p>
       {error && (
