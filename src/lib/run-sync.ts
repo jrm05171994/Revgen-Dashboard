@@ -8,6 +8,8 @@ import type { SalesType, CompanyStage, BudgetCycle } from "@prisma/client";
 export type AttioSyncResult = {
   companiesUpserted: number;
   dealsUpserted: number;
+  deletedDeals: number;
+  deletedCompanies: number;
   durationMs: number;
 };
 
@@ -72,7 +74,61 @@ export async function runAttioSync(): Promise<AttioSyncResult> {
     dealsUpserted++;
   }
 
-  return { companiesUpserted, dealsUpserted, durationMs: Date.now() - startedAt };
+  // 4. Compute orphans — IDs present locally but missing from Attio response
+  const attioDealIds = new Set(deals.map((d) => d.id));
+  const attioCompanyIds = new Set(companies.map((c) => c.id));
+
+  const localDealIds = (await prisma.deal.findMany({ select: { id: true } })).map((d) => d.id);
+  const localCompanyIds = (await prisma.company.findMany({ select: { id: true } })).map((c) => c.id);
+
+  const dealsToDelete = localDealIds.filter((id) => !attioDealIds.has(id));
+
+  // Don't delete companies that still have deals (those deals would have already been removed
+  // above if they were orphaned themselves — so any remaining deals are valid).
+  const companiesStillReferenced = new Set(
+    (await prisma.deal.findMany({
+      where: { companyId: { not: null }, id: { notIn: dealsToDelete } },
+      select: { companyId: true },
+    })).map((d) => d.companyId!).filter(Boolean)
+  );
+  const companiesToDelete = localCompanyIds.filter(
+    (id) => !attioCompanyIds.has(id) && !companiesStillReferenced.has(id)
+  );
+
+  // 5. Delete in a transaction, preserving revenue history
+  let deletedDeals = 0;
+  let deletedCompanies = 0;
+
+  if (dealsToDelete.length > 0 || companiesToDelete.length > 0) {
+    await prisma.$transaction(async (tx) => {
+      if (dealsToDelete.length > 0) {
+        await tx.actualRevenueEntry.updateMany({
+          where: { dealId: { in: dealsToDelete } },
+          data: { dealId: null, matchStatus: "unmatched" },
+        });
+        const res = await tx.deal.deleteMany({ where: { id: { in: dealsToDelete } } });
+        deletedDeals = res.count;
+      }
+      if (companiesToDelete.length > 0) {
+        const res = await tx.company.deleteMany({ where: { id: { in: companiesToDelete } } });
+        deletedCompanies = res.count;
+      }
+      if (deletedDeals > 0 || deletedCompanies > 0) {
+        await tx.auditLog.create({
+          data: {
+            action: "SYNC_ATTIO",
+            details: {
+              event: "orphan_cleanup",
+              deletedDealIds: dealsToDelete,
+              deletedCompanyIds: companiesToDelete,
+            },
+          },
+        });
+      }
+    });
+  }
+
+  return { companiesUpserted, dealsUpserted, deletedDeals, deletedCompanies, durationMs: Date.now() - startedAt };
 }
 
 export type SheetsSyncResult = {
