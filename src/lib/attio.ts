@@ -1,3 +1,5 @@
+import pLimit from "p-limit";
+
 const ATTIO_BASE = "https://api.attio.com/v2";
 const ATTIO_KEY = process.env.ATTIO_API_KEY;
 if (!ATTIO_KEY) throw new Error("ATTIO_API_KEY environment variable is not set");
@@ -170,7 +172,8 @@ export type AttioDeal = {
   typeOfDeal: string | null;
   productLine: string | null;
   paymentStructure: string | null;
-  firstConvoDate: Date | null;
+  // undefined = leave DB value alone (Prisma semantics); null = explicitly clear
+  firstConvoDate: Date | null | undefined;
   expectedClosedDate: Date | null;
   closeDate: Date | null;
   implementationFeeValue: number | null;
@@ -206,7 +209,8 @@ export async function fetchDeals(): Promise<AttioDeal[]> {
     typeOfDeal: mapOrNull(getStatus(r, "type_of_deal"), DEAL_TYPE_MAP),
     productLine: mapOrNull(getStatus(r, "product_line"), PRODUCT_LINE_MAP),
     paymentStructure: mapOrNull(getStatus(r, "payment_structure"), PAYMENT_MAP),
-    firstConvoDate: getDate(r, "first_conversation_date"),
+    // firstConvoDate is derived from stage history (see fetchDealStageHistories), not from a manual custom field
+    firstConvoDate: null,
     expectedClosedDate: getDate(r, "expected_closed_date"),
     closeDate: getDate(r, "close_date"),
     implementationFeeValue: getNumber(r, "implementation_fee_value"),
@@ -235,4 +239,54 @@ export async function fetchCompanies(): Promise<AttioCompany[]> {
 function mapOrNull(value: string | null, map: Record<string, string>): string | null {
   if (!value) return null;
   return map[value] ?? null;
+}
+
+// ─── Stage history (firstConvoDate source of truth) ──────────────────────────
+
+type StageHistoryEntry = {
+  active_from: string | null;
+  active_until: string | null;
+  status?: { title: string } | null;
+};
+
+async function fetchDealStageHistory(dealId: string): Promise<StageHistoryEntry[]> {
+  const res = await fetch(
+    `${ATTIO_BASE}/objects/deals/records/${dealId}/attributes/stage/values?show_historic=true`,
+    { headers: { Authorization: `Bearer ${ATTIO_KEY}` } }
+  );
+  if (!res.ok) throw new Error(`Attio ${res.status} for deal ${dealId} stage history`);
+  const json = await res.json();
+  return (json.data ?? []) as StageHistoryEntry[];
+}
+
+function deriveFirstConvoDate(history: StageHistoryEntry[]): Date | null {
+  const firstConvoEntries = history.filter((e) => e.status?.title === "First Conversation");
+  if (firstConvoEntries.length === 0) return null;
+  const earliest = firstConvoEntries.reduce((acc, e) => {
+    if (!e.active_from) return acc;
+    if (!acc.active_from) return e;
+    return new Date(e.active_from) < new Date(acc.active_from) ? e : acc;
+  });
+  return earliest.active_from ? new Date(earliest.active_from) : null;
+}
+
+export async function fetchDealStageHistories(
+  dealIds: string[]
+): Promise<Map<string, Date | null>> {
+  const limit = pLimit(8);
+  const out = new Map<string, Date | null>();
+  await Promise.all(
+    dealIds.map((id) =>
+      limit(async () => {
+        try {
+          const history = await fetchDealStageHistory(id);
+          out.set(id, deriveFirstConvoDate(history));
+        } catch (err) {
+          // On failure, leave the map entry unset so the upsert preserves the existing DB value
+          console.error(`[attio] stage history failed for ${id}:`, err);
+        }
+      })
+    )
+  );
+  return out;
 }

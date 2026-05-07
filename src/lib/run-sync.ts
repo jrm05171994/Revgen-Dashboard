@@ -1,6 +1,6 @@
 // src/lib/run-sync.ts
 import { prisma } from "@/lib/prisma";
-import { fetchDeals, fetchCompanies } from "@/lib/attio";
+import { fetchDeals, fetchCompanies, fetchDealStageHistories } from "@/lib/attio";
 import { fetchSheetAssumptions } from "@/lib/sheets";
 import { buildDealUpsert } from "@/lib/sync-utils";
 import type { SalesType, CompanyStage, BudgetCycle } from "@prisma/client";
@@ -61,12 +61,24 @@ export async function runAttioSync(): Promise<AttioSyncResult> {
 
   // 3. Sync deals
   const deals = await fetchDeals();
+
+  // 3a. Derive firstConvoDate from Attio stage history (source of truth — the
+  // manual `first_conversation_date` custom field is rarely populated by reps).
+  const firstConvoDates = await fetchDealStageHistories(deals.map((d) => d.id));
+
   let dealsUpserted = 0;
 
   for (const deal of deals) {
     const existing = existingMap.get(deal.id);
+    // If the history fetch succeeded, use its derived date (which may be null
+    // when the deal hasn't reached First Conversation yet). If it failed, leave
+    // the existing DB value untouched by passing `undefined`.
+    const dealWithHistory = {
+      ...deal,
+      firstConvoDate: firstConvoDates.has(deal.id) ? firstConvoDates.get(deal.id) ?? null : undefined,
+    };
     const upsert = buildDealUpsert(
-      deal,
+      dealWithHistory,
       existing?.stage ?? null,
       existing?.stageEnteredAt ?? null
     );
