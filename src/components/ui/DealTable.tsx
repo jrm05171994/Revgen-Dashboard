@@ -12,8 +12,8 @@ export type DealRow = {
   typeOfDeal: string | null;
   status: string;
   daysInStage: number | null;
-  firstConvoDate: string | null;    // ISO string (serializable from Server Component)
-  expectedClosedDate: string | null; // ISO string
+  firstConvoDate: string | null;
+  expectedClosedDate: string | null;
 };
 
 type Props = {
@@ -24,59 +24,59 @@ type Props = {
 
 export function DealTable({ deals, onRowClick, compact = false }: Props) {
   if (deals.length === 0) {
-    return <p className="text-sm text-gray-400 py-4">No deals to display.</p>;
+    return <p className="text-sm text-slate-400 py-4">No deals to display.</p>;
   }
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-card border border-slate-200">
       <table className="min-w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-            <th className="pb-2 pr-4">Deal</th>
-            <th className="pb-2 pr-4">Value</th>
-            <th className="pb-2 pr-4">Stage</th>
-            {!compact && <th className="pb-2 pr-4">Source</th>}
-            {!compact && <th className="pb-2 pr-4">Type</th>}
-            {!compact && <th className="pb-2 pr-4">Exp. Close</th>}
-            <th className="pb-2">Status</th>
+        <thead className="bg-slate-50 border-b border-slate-200">
+          <tr className="text-left">
+            <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Deal</th>
+            <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Value</th>
+            <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Stage</th>
+            {!compact && <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Source</th>}
+            {!compact && <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Type</th>}
+            {!compact && <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Exp. Close</th>}
+            <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Status</th>
           </tr>
         </thead>
-        <tbody>
-          {deals.map((deal) => (
+        <tbody className="divide-y divide-slate-100 bg-white">
+          {deals.map((deal, i) => (
             <tr
               key={deal.id}
-              className={`border-b last:border-0 ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}`}
+              className={`${i % 2 === 1 ? "bg-slate-50/40" : ""} ${onRowClick ? "cursor-pointer hover:bg-teal/5" : ""} transition-colors`}
               onClick={() => onRowClick?.(deal)}
             >
-              <td className="py-2.5 pr-4">
-                <p className="font-medium text-navy truncate max-w-[180px]">{deal.name}</p>
+              <td className="px-5 py-3">
+                <p className="font-semibold text-navy truncate max-w-[200px]">{deal.name}</p>
                 {deal.companyName && (
-                  <p className="text-xs text-gray-400 truncate max-w-[180px]">{deal.companyName}</p>
+                  <p className="text-xs text-slate-500 truncate max-w-[200px]">{deal.companyName}</p>
                 )}
               </td>
-              <td className="py-2.5 pr-4 font-medium text-gray-800">
+              <td className="px-5 py-3 font-semibold text-slate-700 tabular-nums">
                 {deal.value != null ? formatCurrency(deal.value) : "—"}
               </td>
-              <td className="py-2.5 pr-4">
+              <td className="px-5 py-3">
                 {deal.stage ? <StagePill value={deal.stage} /> : "—"}
               </td>
               {!compact && (
-                <td className="py-2.5 pr-4 text-gray-500">
+                <td className="px-5 py-3 text-slate-600">
                   {deal.source ? (SOURCE_LABELS[deal.source] ?? deal.source) : "—"}
                 </td>
               )}
               {!compact && (
-                <td className="py-2.5 pr-4 text-gray-500">
+                <td className="px-5 py-3 text-slate-600">
                   {deal.typeOfDeal ? (DEAL_TYPE_LABELS[deal.typeOfDeal] ?? deal.typeOfDeal) : "—"}
                 </td>
               )}
               {!compact && (
-                <td className="py-2.5 pr-4 text-gray-500 text-xs">
+                <td className="px-5 py-3 text-slate-500 text-xs tabular-nums">
                   {deal.expectedClosedDate
                     ? new Date(deal.expectedClosedDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                     : "—"}
                 </td>
               )}
-              <td className="py-2.5">
+              <td className="px-5 py-3">
                 <StagePill value={deal.status} type="status" />
               </td>
             </tr>
