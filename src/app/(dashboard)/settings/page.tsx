@@ -66,7 +66,7 @@ export default async function SettingsPage() {
   return (
     <div>
       <TopBar title="Settings" />
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-8">
         <UserManagementSection
           currentUserId={session.user.id}
           initialUsers={serializedUsers}

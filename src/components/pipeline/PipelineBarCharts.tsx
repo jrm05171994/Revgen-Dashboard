@@ -35,7 +35,7 @@ export function PipelineBarCharts({ data }: { data: PipelineData }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-6">
         <PipelineBarChart
           title="By Stage"
           data={data.byStage}

@@ -68,19 +68,19 @@ export function InteractiveBreakdown({ deals }: { deals: DealRow[] }) {
 
   return (
     <>
-      <div ref={cardRef} className="bg-white rounded-xl shadow-sm p-6">
+      <div ref={cardRef} className="bg-white rounded-card shadow-card p-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             Pipeline Breakdown
           </h2>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-slate-600">
             <ExportButton getElement={() => cardRef.current} filename="pipeline-breakdown" variant="icon" />
             <label className="flex items-center gap-2">
               Group by:
               <select
                 value={groupBy}
                 onChange={(e) => setGroupBy(e.target.value as GroupKey)}
-                className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal/50"
+                className="border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal/40"
               >
                 {GROUP_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -92,7 +92,7 @@ export function InteractiveBreakdown({ deals }: { deals: DealRow[] }) {
               <select
                 value={breakdownBy}
                 onChange={(e) => setBreakdownBy(e.target.value as GroupKey | "none")}
-                className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal/50"
+                className="border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-teal/40"
               >
                 <option value="none">None</option>
                 {GROUP_OPTIONS.filter((o) => o.value !== groupBy).map((o) => (
@@ -104,15 +104,24 @@ export function InteractiveBreakdown({ deals }: { deals: DealRow[] }) {
         </div>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+            <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
             <YAxis
               tickFormatter={(v: number) => formatCurrency(v)}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: "#64748b" }}
               axisLine={false}
               tickLine={false}
               width={60}
             />
             <Tooltip
+              cursor={{ fill: "rgba(52,179,212,0.08)" }}
+              contentStyle={{
+                background: "white",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                boxShadow: "0 4px 12px rgba(15,23,42,0.08)",
+                fontSize: "12px",
+              }}
+              labelStyle={{ color: "#11327A", fontWeight: 600 }}
               formatter={(value: unknown, name: unknown) => {
                 const nameStr = String(name ?? "");
                 return [
@@ -128,7 +137,7 @@ export function InteractiveBreakdown({ deals }: { deals: DealRow[] }) {
                 dataKey={key}
                 stackId="a"
                 fill={BAR_COLORS[i % BAR_COLORS.length]}
-                radius={i === barKeys.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                radius={i === barKeys.length - 1 ? [6, 6, 0, 0] : [0, 0, 0, 0]}
                 name={key === "__value__" ? "Pipeline" : (brkLabels[key] ?? key)}
                 cursor="pointer"
                 onClick={(entry: unknown) => handleBarClick(entry as Record<string, unknown>)}

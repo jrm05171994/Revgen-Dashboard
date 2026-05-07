@@ -20,8 +20,8 @@ export function ComparisonSelector() {
   }
 
   return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-      <span className="text-xs text-gray-500 px-1">vs.</span>
+    <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1 ring-1 ring-slate-200">
+      <span className="text-xs text-slate-500 px-1">vs.</span>
       {OPTIONS.map((o) => (
         <button
           key={o.label}
@@ -29,7 +29,7 @@ export function ComparisonSelector() {
           className={`px-3 py-1 rounded-md text-xs font-medium transition ${
             current === o.value
               ? "bg-white text-navy shadow-sm"
-              : "text-gray-500 hover:text-gray-700"
+              : "text-slate-500 hover:text-slate-700"
           }`}
         >
           {o.label}

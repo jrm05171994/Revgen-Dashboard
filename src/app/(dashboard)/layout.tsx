@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   if (!session) redirect("/login");
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <Sidebar userRole={session.user.role ?? "REVGEN"} />
       {/*
         ml-[54px] matches collapsed sidebar width.

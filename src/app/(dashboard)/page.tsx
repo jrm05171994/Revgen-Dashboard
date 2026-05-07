@@ -40,7 +40,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </Suspense>
         }
       />
-      <div id="export-content" className="p-6 space-y-6">
+      <div id="export-content" className="p-6 space-y-8">
         <DashboardKpiStrip data={data} />
         <RevenueGoalCard data={data} />
         <TopDealsSection deals={data.topDeals} />

@@ -104,57 +104,57 @@ function CsvUploadPanel({ onSuccess }: { onSuccess: () => void }) {
     const matched = results.filter((r) => r.matchStatus === "matched").length;
     const total = results.reduce((s, r) => s + r.amount, 0);
     return (
-      <div className="mt-4 border-t pt-4">
-        <div className="flex items-center gap-6 mb-3 p-3 bg-emerald-50 rounded-lg">
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <div className="flex items-center gap-6 mb-3 p-3 bg-emerald-50 rounded-card border border-emerald-100">
           <div><p className="text-xl font-extrabold text-emerald-700">{results.length}</p><p className="text-xs text-emerald-600">Rows uploaded</p></div>
-          <div><p className="text-xl font-extrabold text-navy">{matched}</p><p className="text-xs text-gray-500">Matched to deals</p></div>
-          <div><p className="text-xl font-extrabold text-navy">{formatCurrency(total)}</p><p className="text-xs text-gray-500">Total revenue added</p></div>
+          <div><p className="text-xl font-extrabold text-navy">{matched}</p><p className="text-xs text-slate-500">Matched to deals</p></div>
+          <div><p className="text-xl font-extrabold text-navy">{formatCurrency(total)}</p><p className="text-xs text-slate-500">Total revenue added</p></div>
         </div>
-        <button onClick={() => setResults(null)} className="text-xs text-gray-400 hover:text-navy transition-colors">Upload another file</button>
+        <button onClick={() => setResults(null)} className="text-xs text-slate-400 hover:text-navy transition-colors">Upload another file</button>
       </div>
     );
   }
 
   return (
-    <div className="mt-4 border-t pt-4 space-y-4">
+    <div className="mt-4 border-t border-slate-200 pt-4 space-y-4">
       <div className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-1">
-          <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Period Start</label>
+          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Period Start</label>
           <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)}
-            className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold" />
+            className="w-36 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Period End</label>
+          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Period End</label>
           <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)}
-            className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold" />
+            className="w-36 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold" />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">CSV File</label>
+          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">CSV File</label>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleFile}
-            className="text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-navy file:text-white hover:file:bg-navy/90" />
+            className="text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-navy file:text-white hover:file:bg-navy/90" />
         </div>
       </div>
       {parseError && <p className="text-xs text-red-500">{parseError}</p>}
       {rows.length > 0 && (
         <>
-          <p className="text-xs text-gray-400">Preview ({rows.length} rows)</p>
+          <p className="text-xs text-slate-500">Preview ({rows.length} rows)</p>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                  <th className="pb-1.5 pr-4">Customer</th>
-                  <th className="pb-1.5 text-right">Amount</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                  <th className="px-4 py-2.5 pr-4">Customer</th>
+                  <th className="px-4 py-2.5 text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.slice(0, 8).map((row, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="py-1.5 pr-4 text-navy font-medium">{row.customerName}</td>
-                    <td className="py-1.5 text-right text-gray-600">{formatCurrency(row.amount)}</td>
+                  <tr key={i} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                    <td className="px-4 py-2.5 pr-4 text-navy font-medium">{row.customerName}</td>
+                    <td className="px-4 py-2.5 text-right text-slate-600">{formatCurrency(row.amount)}</td>
                   </tr>
                 ))}
                 {rows.length > 8 && (
-                  <tr><td colSpan={2} className="py-1.5 text-xs text-gray-400 text-center">&hellip;and {rows.length - 8} more rows</td></tr>
+                  <tr><td colSpan={2} className="px-4 py-2.5 text-xs text-slate-400 text-center">&hellip;and {rows.length - 8} more rows</td></tr>
                 )}
               </tbody>
             </table>
@@ -252,49 +252,49 @@ export function RevenueUpload() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 space-y-6">
+    <div className="bg-white rounded-card shadow-card p-6 space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
           Revenue Entry
         </h2>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-slate-500">
           Record recognized revenue by month. Feeds the &ldquo;Booked Revenue&rdquo; KPI on the Dashboard.
         </p>
       </div>
 
       {/* Manual Entry */}
       <div>
-        <h3 className="text-xs font-semibold text-navy uppercase tracking-wide mb-3">Manual Entry</h3>
+        <h3 className="text-[11px] font-semibold text-navy uppercase tracking-wider mb-3">Manual Entry</h3>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Month</label>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Month</label>
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+              className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
             >
               {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Year</label>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Year</label>
             <input
               type="number"
               value={manualYear}
               onChange={(e) => setManualYear(Number(e.target.value))}
-              className="w-24 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+              className="w-24 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">Amount ($)</label>
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Amount ($)</label>
             <input
               type="text"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleManualSave(); }}
               placeholder="e.g. 125,000"
-              className="w-36 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+              className="w-36 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
             />
           </div>
           <button
@@ -322,39 +322,39 @@ export function RevenueUpload() {
 
       {/* Existing entries */}
       <div>
-        <h3 className="text-xs font-semibold text-navy uppercase tracking-wide mb-3">Recorded Revenue</h3>
+        <h3 className="text-[11px] font-semibold text-navy uppercase tracking-wider mb-3">Recorded Revenue</h3>
         {loadingBatches ? (
-          <p className="text-xs text-gray-400">Loading…</p>
+          <p className="text-xs text-slate-500">Loading…</p>
         ) : batches.length === 0 ? (
-          <p className="text-xs text-gray-400">No revenue recorded yet.</p>
+          <p className="text-xs text-slate-500">No revenue recorded yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                  <th className="pb-1.5 pr-6">Period</th>
-                  <th className="pb-1.5 pr-6 text-right">Amount</th>
-                  <th className="pb-1.5 pr-6">Source</th>
-                  <th className="pb-1.5 pr-6">Added</th>
-                  <th className="pb-1.5"></th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                  <th className="px-4 py-2.5 pr-6">Period</th>
+                  <th className="px-4 py-2.5 pr-6 text-right">Amount</th>
+                  <th className="px-4 py-2.5 pr-6">Source</th>
+                  <th className="px-4 py-2.5 pr-6">Added</th>
+                  <th className="px-4 py-2.5"></th>
                 </tr>
               </thead>
               <tbody>
                 {batches.map((b) => (
-                  <tr key={b.uploadBatchId} className="border-b last:border-0">
-                    <td className="py-2 pr-6 text-navy font-medium">
+                  <tr key={b.uploadBatchId} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                    <td className="px-4 py-2.5 pr-6 text-navy font-medium">
                       {formatPeriod(b.periodStart, b.periodEnd)}
                     </td>
-                    <td className="py-2 pr-6 text-right font-semibold text-gray-700">
+                    <td className="px-4 py-2.5 pr-6 text-right font-semibold text-slate-700 tabular-nums">
                       {formatCurrency(b.totalAmount)}
                     </td>
-                    <td className="py-2 pr-6 text-gray-500">
+                    <td className="px-4 py-2.5 pr-6 text-slate-500">
                       {b.isManual ? "Manual" : `CSV (${b.rowCount} rows)`}
                     </td>
-                    <td className="py-2 pr-6 text-gray-400 text-xs">
+                    <td className="px-4 py-2.5 pr-6 text-slate-400 text-xs">
                       {new Date(b.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </td>
-                    <td className="py-2">
+                    <td className="px-4 py-2.5">
                       <button
                         onClick={() => handleDelete(b.uploadBatchId)}
                         disabled={deletingId === b.uploadBatchId}

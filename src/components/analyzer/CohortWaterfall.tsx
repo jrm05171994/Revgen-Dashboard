@@ -46,14 +46,14 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-gray-400">
+      <div className="bg-white rounded-card shadow-card p-6 text-sm text-slate-400">
         Loading cohort data…
       </div>
     );
   }
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-6 text-sm text-red-500">{error}</div>
+      <div className="bg-white rounded-card shadow-card p-6 text-sm text-red-500">{error}</div>
     );
   }
   if (!data) return null;
@@ -69,25 +69,25 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
   return (
     <div ref={outerRef} className="space-y-4">
       {/* Cohort waterfall table */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-card shadow-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             Cohort: Active Pipeline at {dateA} → Status at {dateB}
           </h3>
           <ExportButton getElement={() => outerRef.current} filename="cohort-waterfall" variant="icon" />
         </div>
         <div className="flex flex-wrap gap-8 mb-6">
           <div>
-            <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Cohort Size
             </p>
-            <p className="text-base font-extrabold text-navy">{data.cohortTotal} deals</p>
+            <p className="text-xl font-bold text-navy">{data.cohortTotal} deals</p>
           </div>
           <div>
-            <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Cohort Value at {dateA}
             </p>
-            <p className="text-base font-extrabold text-navy">
+            <p className="text-xl font-bold text-navy">
               {formatCurrency(data.cohortTotalValue)}
             </p>
           </div>
@@ -96,11 +96,11 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                <th className="pb-2 pr-4">Outcome</th>
-                <th className="pb-2 pr-4 text-right">Deals</th>
-                <th className="pb-2 pr-4 text-right">Value</th>
-                <th className="pb-2 text-right">% of Cohort</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                <th className="px-5 py-3 pr-4">Outcome</th>
+                <th className="px-5 py-3 pr-4 text-right">Deals</th>
+                <th className="px-5 py-3 pr-4 text-right">Value</th>
+                <th className="px-5 py-3 text-right">% of Cohort</th>
               </tr>
             </thead>
             <tbody>
@@ -109,21 +109,21 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
                 const meta = CATEGORY_META[cat];
                 const pct = data.cohortTotal > 0 ? row.dealCount / data.cohortTotal : 0;
                 return (
-                  <tr key={cat} className="border-b last:border-0">
-                    <td className="py-3 pr-4">
+                  <tr key={cat} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                    <td className="px-5 py-3 pr-4">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${meta.colorClass}`}
                       >
                         {meta.label}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-right font-medium text-navy">
+                    <td className="px-5 py-3 pr-4 text-right font-semibold text-navy tabular-nums">
                       {row.dealCount}
                     </td>
-                    <td className="py-3 pr-4 text-right font-medium text-navy">
+                    <td className="px-5 py-3 pr-4 text-right font-semibold text-navy tabular-nums">
                       {formatCurrency(row.totalValue)}
                     </td>
-                    <td className="py-3 text-right text-gray-500">{formatPct(pct)}</td>
+                    <td className="px-5 py-3 text-right text-slate-500">{formatPct(pct)}</td>
                   </tr>
                 );
               })}
@@ -133,44 +133,44 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
       </div>
 
       {/* Flow metrics */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      <div className="bg-white rounded-card shadow-card p-6">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-4">
           Pipeline Flow: {dateA} → {dateB}
         </h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <div className="bg-slate-50 rounded-card p-4 border border-slate-200">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               New Pipeline
             </p>
-            <p className="text-base font-extrabold text-navy">
+            <p className="text-xl font-bold text-navy">
               {data.flowMetrics.newDeals} deals
             </p>
-            <p className="text-xs text-gray-400">{formatCurrency(data.flowMetrics.newValue)}</p>
+            <p className="text-xs text-slate-500">{formatCurrency(data.flowMetrics.newValue)}</p>
           </div>
-          <div className="bg-emerald-50 rounded-lg p-4">
-            <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <div className="bg-emerald-50/70 rounded-card p-4 border border-emerald-100">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Won
             </p>
-            <p className="text-base font-extrabold text-emerald-700">
+            <p className="text-xl font-bold text-emerald-700">
               {data.flowMetrics.wonDeals} deals
             </p>
-            <p className="text-xs text-gray-400">{formatCurrency(data.flowMetrics.wonValue)}</p>
+            <p className="text-xs text-slate-500">{formatCurrency(data.flowMetrics.wonValue)}</p>
           </div>
-          <div className="bg-red-50 rounded-lg p-4">
-            <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <div className="bg-red-50/70 rounded-card p-4 border border-red-100">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Lost
             </p>
-            <p className="text-base font-extrabold text-red-600">
+            <p className="text-xl font-bold text-red-600">
               {data.flowMetrics.lostDeals} deals
             </p>
-            <p className="text-xs text-gray-400">{formatCurrency(data.flowMetrics.lostValue)}</p>
+            <p className="text-xs text-slate-500">{formatCurrency(data.flowMetrics.lostValue)}</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <div className="bg-slate-50 rounded-card p-4 border border-slate-200">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Net Pipeline Change
             </p>
             <p
-              className={`text-base font-extrabold ${
+              className={`text-xl font-bold ${
                 data.flowMetrics.netPipelineChange >= 0 ? "text-emerald-700" : "text-coral"
               }`}
             >

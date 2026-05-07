@@ -63,13 +63,13 @@ export function PipelineClientSection({ data }: { data: PipelineData }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
           Expected Close Year:
         </label>
         <select
           value={yearFilter}
           onChange={(e) => setYearFilter(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
+          className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
         >
           {YEAR_OPTIONS.map((y) => (
             <option key={String(y)} value={String(y)}>{String(y)}</option>
@@ -78,7 +78,7 @@ export function PipelineClientSection({ data }: { data: PipelineData }) {
         {yearFilter !== "All" && (
           <button
             onClick={() => setYearFilter("All")}
-            className="text-xs text-gray-400 hover:text-gray-600"
+            className="text-xs text-slate-400 hover:text-slate-600"
           >
             Clear
           </button>

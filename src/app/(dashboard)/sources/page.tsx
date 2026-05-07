@@ -50,7 +50,7 @@ export default async function SourcesPage() {
   return (
     <div>
       <TopBar title="Data Sources" />
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-8">
         <SyncStatusGrid sources={sources} dbCounts={dbCounts} />
         <RevenueUpload />
         <SyncHistoryTable />

@@ -16,13 +16,13 @@ const STAGE_STYLES: Record<string, string> = {
 type Props = { value: string; type?: "stage" | "status" };
 
 export function StagePill({ value, type = "stage" }: Props) {
-  const style = STAGE_STYLES[value] ?? "bg-gray-100 text-gray-600";
+  const style = STAGE_STYLES[value] ?? "bg-slate-100 text-slate-600";
   const label =
     type === "stage"
       ? (STAGE_LABELS[value] ?? value)
       : value.charAt(0).toUpperCase() + value.slice(1);
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${style}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight ${style}`}>
       {label}
     </span>
   );

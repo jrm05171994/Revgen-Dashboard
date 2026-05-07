@@ -59,44 +59,44 @@ export function SyncHistoryTable() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+    <div className="bg-white rounded-card shadow-card p-6">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-4">
         Sync Activity Log
       </h2>
 
       {loading ? (
-        <p className="text-xs text-gray-400">Loading…</p>
+        <p className="text-xs text-slate-400">Loading…</p>
       ) : (
         <>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                  <th className="pb-2 pr-4">Action</th>
-                  <th className="pb-2 pr-4">When</th>
-                  <th className="pb-2 pr-4">Details</th>
-                  <th className="pb-2">Triggered By</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                  <th className="px-5 py-3 pr-4">Action</th>
+                  <th className="px-5 py-3 pr-4">When</th>
+                  <th className="px-5 py-3 pr-4">Details</th>
+                  <th className="px-5 py-3">Triggered By</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.map((log) => {
                   const meta = ACTION_LABELS[log.action] ?? { label: log.action, color: "bg-gray-100 text-gray-600" };
                   return (
-                    <tr key={log.id} className="border-b last:border-0">
-                      <td className="py-2.5 pr-4">
+                    <tr key={log.id} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                      <td className="px-5 py-3 pr-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${meta.color}`}>
                           {meta.label}
                         </span>
                       </td>
-                      <td className="py-2.5 pr-4 text-xs text-gray-500">
+                      <td className="px-5 py-3 pr-4 text-xs text-slate-500">
                         {new Date(log.createdAt).toLocaleString("en-US", {
                           month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
                         })}
                       </td>
-                      <td className="py-2.5 pr-4 text-xs text-gray-600 max-w-xs truncate">
+                      <td className="px-5 py-3 pr-4 text-xs text-slate-600 max-w-xs truncate">
                         {formatDetails(log.action, log.details)}
                       </td>
-                      <td className="py-2.5 text-xs text-gray-400">
+                      <td className="px-5 py-3 text-xs text-slate-400">
                         {log.user?.name ?? log.user?.email ?? "cron"}
                       </td>
                     </tr>
@@ -107,20 +107,20 @@ export function SyncHistoryTable() {
           </div>
 
           {total > limit && (
-            <div className="flex items-center justify-between mt-4 text-xs text-gray-400">
+            <div className="flex items-center justify-between mt-4 text-xs text-slate-400">
               <span>{offset + 1}–{Math.min(offset + limit, total)} of {total}</span>
               <div className="flex gap-2">
                 <button
                   onClick={() => goTo(Math.max(0, offset - limit))}
                   disabled={offset === 0}
-                  className="px-2 py-1 rounded border border-gray-200 disabled:opacity-40"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors"
                 >
                   ← Prev
                 </button>
                 <button
                   onClick={() => goTo(offset + limit)}
                   disabled={offset + limit >= total}
-                  className="px-2 py-1 rounded border border-gray-200 disabled:opacity-40"
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors"
                 >
                   Next →
                 </button>

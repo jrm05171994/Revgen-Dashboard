@@ -18,7 +18,7 @@ export function YearSelector() {
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+    <div className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 ring-1 ring-slate-200">
       {YEARS.map((year) => (
         <button
           key={year}
@@ -27,7 +27,7 @@ export function YearSelector() {
             "px-3 py-1 text-xs font-semibold rounded-md transition-colors",
             currentYear === year
               ? "bg-navy text-white shadow-sm"
-              : "text-gray-500 hover:text-navy hover:bg-white/70"
+              : "text-slate-500 hover:text-navy hover:bg-white"
           )}
         >
           {year}

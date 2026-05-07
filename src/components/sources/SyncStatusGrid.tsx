@@ -28,7 +28,7 @@ const STATUS_COLORS = {
   fresh:  { dot: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" },
   stale:  { dot: "bg-yellow-400",  text: "text-yellow-700",  bg: "bg-yellow-50" },
   old:    { dot: "bg-coral",       text: "text-red-700",     bg: "bg-red-50" },
-  never:  { dot: "bg-gray-300",    text: "text-gray-500",    bg: "bg-gray-50" },
+  never:  { dot: "bg-gray-300",    text: "text-slate-500",    bg: "bg-gray-50" },
 };
 
 function formatRelative(at: string): string {
@@ -72,15 +72,15 @@ export function SyncStatusGrid({ sources, dbCounts }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
+    <div className="space-y-8">
+      <div className="grid grid-cols-3 gap-6">
         {sources.map((src) => {
           const age = staleness(src.lastSync?.at ?? null);
           const colors = STATUS_COLORS[age];
           const isSyncing = syncing === src.key;
           const disabled = src.key === "snapshot";
           return (
-            <div key={src.key} className="bg-white rounded-xl shadow-sm p-5">
+            <div key={src.key} className="bg-white rounded-card shadow-card p-5">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
@@ -99,15 +99,15 @@ export function SyncStatusGrid({ sources, dbCounts }: Props) {
 
               {src.lastSync ? (
                 <>
-                  <p className="text-xs text-gray-400 mb-1">
-                    Last sync: <span className="font-medium text-gray-600">{formatRelative(src.lastSync.at)}</span>
+                  <p className="text-xs text-slate-400 mb-1">
+                    Last sync: <span className="font-medium text-slate-600">{formatRelative(src.lastSync.at)}</span>
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-400">
                     {SOURCE_DETAIL_LABELS[src.key]?.(src.lastSync.details) ?? ""}
                   </p>
                 </>
               ) : (
-                <p className="text-xs text-gray-400">Never synced</p>
+                <p className="text-xs text-slate-400">Never synced</p>
               )}
 
               {results[src.key] && (
@@ -121,8 +121,8 @@ export function SyncStatusGrid({ sources, dbCounts }: Props) {
       </div>
 
       {/* DB record counts */}
-      <div className="bg-white rounded-xl shadow-sm p-5">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Database Records</h3>
+      <div className="bg-white rounded-card shadow-card p-5">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Database Records</h3>
         <div className="grid grid-cols-4 gap-4">
           {[
             { label: "Deals", value: dbCounts.deals },
@@ -131,8 +131,8 @@ export function SyncStatusGrid({ sources, dbCounts }: Props) {
             { label: "Revenue Entries", value: dbCounts.revenueEntries },
           ].map(({ label, value }) => (
             <div key={label} className="text-center">
-              <p className="text-2xl font-extrabold text-navy">{value}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+              <p className="text-3xl font-bold text-navy tabular-nums">{value}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{label}</p>
             </div>
           ))}
         </div>

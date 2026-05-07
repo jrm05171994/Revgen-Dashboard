@@ -10,7 +10,7 @@ type Props = { deal: DealRow | null; onClose: () => void };
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+      <p className="text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">{label}</p>
       <div className="font-medium text-navy">{children}</div>
     </div>
   );
@@ -20,7 +20,7 @@ export function DealDetailModal({ deal, onClose }: Props) {
   return (
     <Modal open={deal != null} onClose={onClose} title={deal?.name ?? ""}>
       {deal && (
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-2 gap-6">
           <Field label="Company">{deal.companyName ?? "—"}</Field>
           <Field label="Value (ACV)">
             {deal.value != null ? formatCurrency(deal.value) : "—"}

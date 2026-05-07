@@ -4,7 +4,6 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { formatCurrency } from "@/lib/format";
 import type { BreakdownEntry } from "@/lib/pipeline-data";
 
-// Cycle: navy → teal → coral → green (matches prototype ranking colors)
 const BAR_COLORS = ["#11327A", "#34B3D4", "#EE8363", "#4BAC64"];
 
 type TooltipProps = { active?: boolean; payload?: Array<{ payload: BreakdownEntry & { label: string } }> };
@@ -13,10 +12,10 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-white border border-gray-100 shadow-lg rounded-lg px-3 py-2 text-sm">
+    <div className="bg-white border border-slate-200 shadow-lg rounded-lg px-3 py-2 text-sm ring-1 ring-slate-100">
       <p className="font-semibold text-navy mb-1">{d.label}</p>
       <p className="text-teal font-medium">{d.count} lead{d.count !== 1 ? "s" : ""}</p>
-      <p className="text-gray-500 text-xs">{formatCurrency(d.value)} pipeline</p>
+      <p className="text-slate-500 text-xs">{formatCurrency(d.value)} pipeline</p>
     </div>
   );
 }
@@ -33,29 +32,29 @@ export function PipelineBarChart({ title, data, labelMap, onBarClick, metric = "
   const chartData = data.map((d) => ({ ...d, label: labelMap?.[d.key] ?? d.key }));
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5">
-      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+    <div className="bg-white rounded-card shadow-card p-6">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-5">
         {title}
       </h3>
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={220}>
         <BarChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 11, fill: "#5D6265" }}
+            tick={{ fontSize: 11, fill: "#64748b" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             tickFormatter={metric === "count" ? (v: number) => String(v) : (v: number) => formatCurrency(v)}
-            tick={{ fontSize: 11, fill: "#5D6265" }}
+            tick={{ fontSize: 11, fill: "#64748b" }}
             axisLine={false}
             tickLine={false}
             width={60}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(52,179,212,0.08)" }} />
           <Bar
             dataKey={metric}
-            radius={[4, 4, 0, 0]}
+            radius={[6, 6, 0, 0]}
             cursor={onBarClick ? "pointer" : "default"}
             onClick={(d: unknown) => onBarClick?.((d as BreakdownEntry).key)}
           >

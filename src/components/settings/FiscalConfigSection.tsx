@@ -44,37 +44,37 @@ export function FiscalConfigSection({ initialConfigs }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+    <div className="bg-white rounded-card shadow-card p-6">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
         Revenue Targets
       </h2>
-      <p className="text-xs text-gray-400 mb-5">
+      <p className="text-xs text-slate-500 mb-5">
         Annual revenue goals used in Dashboard KPIs and coverage calculations.
       </p>
 
       <form onSubmit={handleSave} className="space-y-5">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-              <th className="pb-2 pr-8">Year</th>
-              <th className="pb-2 pr-8">Revenue Goal ($)</th>
-              <th className="pb-2 text-gray-400 font-normal normal-case tracking-normal">Formatted</th>
+            <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+              <th className="px-5 py-3 pr-8">Year</th>
+              <th className="px-5 py-3 pr-8">Revenue Goal ($)</th>
+              <th className="px-5 py-3 text-slate-400 font-normal normal-case tracking-normal">Formatted</th>
             </tr>
           </thead>
           <tbody>
             {configs.map((c) => (
-              <tr key={c.fiscalYear} className="border-b last:border-0">
-                <td className="py-3 pr-8 font-semibold text-navy">{c.fiscalYear}</td>
-                <td className="py-3 pr-8">
+              <tr key={c.fiscalYear} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                <td className="px-5 py-3 pr-8 font-semibold text-navy">{c.fiscalYear}</td>
+                <td className="px-5 py-3 pr-8">
                   <input
                     type="number"
                     step="1"
                     value={c.revenueGoal || ""}
                     onChange={(e) => handleChange(c.fiscalYear, e.target.value)}
-                    className="w-40 px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-teal/40"
+                    className="w-40 px-3 py-1.5 text-sm border border-slate-200 rounded-lg text-navy font-semibold focus:outline-none focus:ring-2 focus:ring-teal/40"
                   />
                 </td>
-                <td className="py-3 text-xs text-gray-400">{formatCurrency(c.revenueGoal)}</td>
+                <td className="px-5 py-3 text-xs text-slate-400">{formatCurrency(c.revenueGoal)}</td>
               </tr>
             ))}
           </tbody>
