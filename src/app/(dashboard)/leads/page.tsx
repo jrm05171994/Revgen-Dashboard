@@ -11,7 +11,7 @@ export default async function LeadsPage() {
   return (
     <div>
       <TopBar title="Leads" exportId="export-content" />
-      <div id="export-content" className="p-6 space-y-6">
+      <div id="export-content" className="p-6 space-y-8">
         <LeadsKpiStrip data={data} />
         <LeadsChartsSection
           bySource={data.bySource}
