@@ -96,32 +96,32 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+    <div className="space-y-8">
+      <div className="bg-white rounded-card shadow-card p-6">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-4">
           Team Members
         </h2>
         {roleError && <p className="text-xs text-red-500 mb-3">{roleError}</p>}
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-              <th className="pb-2 pr-6">Name</th>
-              <th className="pb-2 pr-6">Email</th>
-              <th className="pb-2 pr-6">Role</th>
-              <th className="pb-2">Joined</th>
+            <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+              <th className="px-5 py-3 pr-6">Name</th>
+              <th className="px-5 py-3 pr-6">Email</th>
+              <th className="px-5 py-3 pr-6">Role</th>
+              <th className="px-5 py-3">Joined</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b last:border-0">
-                <td className="py-3 pr-6 font-medium text-navy">
+              <tr key={user.id} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                <td className="px-5 py-3 pr-6 font-semibold text-navy">
                   {user.name ?? "—"}
                   {user.id === currentUserId && (
-                    <span className="ml-2 text-[10px] text-gray-400">(you)</span>
+                    <span className="ml-2 text-[10px] text-slate-400">(you)</span>
                   )}
                 </td>
-                <td className="py-3 pr-6 text-gray-500">{user.email}</td>
-                <td className="py-3 pr-6">
+                <td className="px-5 py-3 pr-6 text-slate-500">{user.email}</td>
+                <td className="px-5 py-3 pr-6">
                   {user.id === currentUserId ? (
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[user.role]}`}>
                       {ROLE_LABELS[user.role]}
@@ -131,7 +131,7 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
                       value={user.role}
                       disabled={!!saving}
                       onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40 disabled:opacity-50"
+                      className="text-xs border border-slate-200 rounded-lg px-2 py-1 text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40 disabled:opacity-50"
                     >
                       <option value="FINANCE">Finance</option>
                       <option value="LEADERSHIP">Leadership</option>
@@ -140,10 +140,10 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
                     </select>
                   )}
                   {saving === user.id && (
-                    <span className="ml-2 text-[10px] text-gray-400">Saving…</span>
+                    <span className="ml-2 text-[10px] text-slate-400">Saving…</span>
                   )}
                 </td>
-                <td className="py-3 text-xs text-gray-400">
+                <td className="px-5 py-3 text-xs text-slate-400">
                   {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </td>
               </tr>
@@ -152,13 +152,13 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
         </table>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      <div className="bg-white rounded-card shadow-card p-6">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-4">
           Invite New User
         </h2>
         <form onSubmit={handleInvite} className="flex flex-wrap items-end gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Email
             </label>
             <input
@@ -167,17 +167,17 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="colleague@kodahealthcare.com"
-              className="w-64 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy"
+              className="w-64 px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy"
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Role
             </label>
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as typeof inviteRole)}
-              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
+              className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
             >
               <option value="REVGEN">RevGen</option>
               <option value="LEADERSHIP">Leadership</option>
@@ -201,36 +201,36 @@ export function UserManagementSection({ currentUserId, initialUsers, initialInvi
       </div>
 
       {invites.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+        <div className="bg-white rounded-card shadow-card p-6">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-4">
             Pending Invites
           </h2>
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                <th className="pb-2 pr-6">Email</th>
-                <th className="pb-2 pr-6">Role</th>
-                <th className="pb-2 pr-6">Invited By</th>
-                <th className="pb-2 pr-6">Status</th>
-                <th className="pb-2">Sent</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                <th className="px-5 py-3 pr-6">Email</th>
+                <th className="px-5 py-3 pr-6">Role</th>
+                <th className="px-5 py-3 pr-6">Invited By</th>
+                <th className="px-5 py-3 pr-6">Status</th>
+                <th className="px-5 py-3">Sent</th>
               </tr>
             </thead>
             <tbody>
               {invites.map((inv) => (
-                <tr key={inv.id} className="border-b last:border-0">
-                  <td className="py-3 pr-6 text-navy font-medium">{inv.email}</td>
-                  <td className="py-3 pr-6">
+                <tr key={inv.id} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                  <td className="px-5 py-3 pr-6 text-navy font-semibold">{inv.email}</td>
+                  <td className="px-5 py-3 pr-6">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[inv.role]}`}>
                       {ROLE_LABELS[inv.role]}
                     </span>
                   </td>
-                  <td className="py-3 pr-6 text-xs text-gray-500">{inv.invitedBy}</td>
-                  <td className="py-3 pr-6">
+                  <td className="px-5 py-3 pr-6 text-xs text-slate-500">{inv.invitedBy}</td>
+                  <td className="px-5 py-3 pr-6">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${inv.usedAt ? "bg-emerald-100 text-emerald-700" : "bg-yellow-100 text-yellow-700"}`}>
                       {inv.usedAt ? "Accepted" : "Pending"}
                     </span>
                   </td>
-                  <td className="py-3 text-xs text-gray-400">
+                  <td className="px-5 py-3 text-xs text-slate-400">
                     {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </td>
                 </tr>

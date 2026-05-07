@@ -70,11 +70,11 @@ export function StageAssumptionsSection({ initialRows }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+    <div className="bg-white rounded-card shadow-card p-6">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
         Pipeline Stage Assumptions
       </h2>
-      <p className="text-xs text-gray-400 mb-5">
+      <p className="text-xs text-slate-500 mb-5">
         These values drive the Dashboard weighted forecast (Overall Close Rate) and Analyzer conversion analysis.
         Changes here override the Google Sheets sync until the next sheets sync runs.
       </p>
@@ -82,19 +82,19 @@ export function StageAssumptionsSection({ initialRows }: Props) {
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-              <th className="pb-2 pr-6 w-48">Stage</th>
-              <th className="pb-2 pr-6 text-right w-40">Conv. to Next</th>
-              <th className="pb-2 text-right w-36">Avg Days in Stage</th>
+            <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+              <th className="px-5 py-3 pr-6 w-48">Stage</th>
+              <th className="px-5 py-3 pr-6 text-right w-40">Conv. to Next</th>
+              <th className="px-5 py-3 text-right w-36">Avg Days in Stage</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.stage} className="border-b last:border-0">
-                <td className="py-3 pr-6 font-medium text-navy">
+              <tr key={row.stage} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                <td className="px-5 py-3 pr-6 font-semibold text-navy">
                   {STAGE_LABELS[row.stage] ?? row.stage}
                 </td>
-                <td className="py-2 pr-6">
+                <td className="px-5 py-2.5 pr-6">
                   <div className="flex items-center justify-end gap-1">
                     <input
                       type="number"
@@ -103,14 +103,14 @@ export function StageAssumptionsSection({ initialRows }: Props) {
                       step="0.01"
                       value={row.conversionToNext}
                       onChange={(e) => handleChange(row.stage, "conversionToNext", e.target.value)}
-                      className="w-20 px-2 py-1 text-sm text-right border border-gray-200 rounded-lg text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
+                      className="w-20 px-2 py-1 text-sm text-right border border-slate-200 rounded-lg text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
                     />
-                    <span className="text-xs text-gray-400 w-6">
+                    <span className="text-xs text-slate-400 w-6">
                       {(row.conversionToNext * 100).toFixed(0)}%
                     </span>
                   </div>
                 </td>
-                <td className="py-2">
+                <td className="px-5 py-2.5">
                   <div className="flex items-center justify-end gap-1">
                     <input
                       type="number"
@@ -118,9 +118,9 @@ export function StageAssumptionsSection({ initialRows }: Props) {
                       step="1"
                       value={row.avgDaysInStage}
                       onChange={(e) => handleChange(row.stage, "avgDaysInStage", e.target.value)}
-                      className="w-20 px-2 py-1 text-sm text-right border border-gray-200 rounded-lg text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
+                      className="w-20 px-2 py-1 text-sm text-right border border-slate-200 rounded-lg text-navy font-medium focus:outline-none focus:ring-2 focus:ring-teal/40"
                     />
-                    <span className="text-xs text-gray-400 w-6">d</span>
+                    <span className="text-xs text-slate-400 w-6">d</span>
                   </div>
                 </td>
               </tr>
@@ -129,7 +129,7 @@ export function StageAssumptionsSection({ initialRows }: Props) {
         </table>
       </div>
 
-      <div className="flex items-center gap-4 mt-5 pt-4 border-t border-gray-100">
+      <div className="flex items-center gap-4 mt-5 pt-4 border-t border-slate-200">
         <button
           onClick={handleSave}
           disabled={saving}
@@ -142,7 +142,7 @@ export function StageAssumptionsSection({ initialRows }: Props) {
             {msg}
           </p>
         )}
-        <p className="text-xs text-gray-400 ml-auto">
+        <p className="text-xs text-slate-400 ml-auto">
           Note: Next Google Sheets sync will overwrite these values.
         </p>
       </div>
