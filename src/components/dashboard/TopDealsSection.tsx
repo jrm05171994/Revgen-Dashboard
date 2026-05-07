@@ -9,8 +9,8 @@ export function TopDealsSection({ deals }: { deals: DealRow[] }) {
   const [selected, setSelected] = useState<DealRow | null>(null);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+    <div className="bg-white rounded-card shadow-card p-6">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-4">
         Top Deals by Value
       </h2>
       <DealTable deals={deals} onRowClick={setSelected} />

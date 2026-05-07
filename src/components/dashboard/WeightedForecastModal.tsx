@@ -34,7 +34,7 @@ function ModifierInput({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide">
+      <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
         {label}
       </label>
       <div className="flex items-center gap-1.5">
@@ -46,11 +46,11 @@ function ModifierInput({
             onChange(isNaN(v) ? 0 : v);
           }}
           placeholder="0"
-          className="w-20 px-2 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
+          className="w-20 px-2 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal/40 text-navy font-semibold"
         />
-        <span className="text-sm text-gray-500">%</span>
+        <span className="text-sm text-slate-500">%</span>
       </div>
-      <p className="text-[10px] text-gray-400 max-w-[220px] leading-snug">{hint}</p>
+      <p className="text-[10px] text-slate-400 max-w-[220px] leading-snug">{hint}</p>
     </div>
   );
 }
@@ -73,7 +73,7 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
     <Modal open={open} onClose={onClose} title={`Weighted Forecast — FY${year}`} width="2xl">
 
       {/* Global modifiers */}
-      <div className="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
+      <div className="mb-5 p-4 bg-slate-50 rounded-card border border-slate-200">
         <div className="flex flex-wrap items-start gap-8">
           <ModifierInput
             label="Close Rate Modifier (%)"
@@ -89,7 +89,7 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
           />
           <div className="flex flex-col justify-end gap-1 ml-auto self-end">
             <div>
-              <p className="text-[9.5px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Adjusted Total</p>
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Adjusted Total</p>
               <p className={`text-xl font-extrabold ${hasChanges ? "text-teal" : "text-navy"}`}>
                 {formatCurrency(adjustedTotal)}
               </p>
@@ -102,7 +102,7 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
             {hasChanges && (
               <button
                 onClick={resetWhatIf}
-                className="mt-2 text-xs font-semibold text-gray-400 hover:text-navy transition-colors"
+                className="mt-2 text-xs font-semibold text-slate-400 hover:text-navy transition-colors"
               >
                 Reset all overrides
               </button>
@@ -112,7 +112,7 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
       </div>
 
       {/* Formula note */}
-      <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+      <p className="text-xs text-slate-500 mb-4 leading-relaxed">
         <span className="font-semibold text-navy">Formula: </span>
         Deal Value × Stage Close Rate × Timing Factor.
         Timing Factor = months remaining after expected close + implementation period ÷ months in FY{year}.
@@ -125,22 +125,22 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
       </p>
 
       {deals.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-8">
+        <p className="text-sm text-slate-400 text-center py-8">
           No deals with an expected close date in FY{year}.
         </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="border-b text-left text-xs text-gray-500 font-semibold uppercase tracking-wide">
-                <th className="pb-2 pr-2 w-8">Excl.</th>
-                <th className="pb-2 pr-4">Deal</th>
-                <th className="pb-2 pr-4">Stage</th>
-                <th className="pb-2 pr-4">Exp. Close</th>
-                <th className="pb-2 pr-4 text-right">Value</th>
-                <th className="pb-2 pr-4 text-right">Close Rate</th>
-                <th className="pb-2 pr-4 text-right">Timing</th>
-                <th className="pb-2 text-right">Contribution</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-left text-[11px] text-slate-500 font-semibold uppercase tracking-wider">
+                <th className="px-5 py-3 pr-2 w-8">Excl.</th>
+                <th className="px-5 py-3 pr-4">Deal</th>
+                <th className="px-5 py-3 pr-4">Stage</th>
+                <th className="px-5 py-3 pr-4">Exp. Close</th>
+                <th className="px-5 py-3 pr-4 text-right">Value</th>
+                <th className="px-5 py-3 pr-4 text-right">Close Rate</th>
+                <th className="px-5 py-3 pr-4 text-right">Timing</th>
+                <th className="px-5 py-3 text-right">Contribution</th>
               </tr>
             </thead>
             <tbody>
@@ -154,10 +154,10 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
                 return (
                   <tr
                     key={d.id}
-                    className={`border-b last:border-0 ${d.excluded ? "opacity-40" : "hover:bg-gray-50"}`}
+                    className={`border-b border-slate-100 last:border-0 even:bg-slate-50/40 transition-colors ${d.excluded ? "opacity-40" : "hover:bg-teal/5"}`}
                   >
                     {/* Exclude checkbox */}
-                    <td className="py-2 pr-2">
+                    <td className="px-5 py-3 pr-2">
                       <input
                         type="checkbox"
                         checked={override.excluded === true}
@@ -168,18 +168,18 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
                     </td>
 
                     {/* Deal name */}
-                    <td className="py-2 pr-4">
+                    <td className="px-5 py-3 pr-4">
                       <p className="font-medium text-navy leading-tight">{d.name}</p>
-                      {d.companyName && <p className="text-xs text-gray-400">{d.companyName}</p>}
+                      {d.companyName && <p className="text-xs text-slate-500">{d.companyName}</p>}
                     </td>
 
                     {/* Stage */}
-                    <td className="py-2 pr-4 text-gray-600 text-xs whitespace-nowrap">
+                    <td className="px-5 py-3 pr-4 text-slate-600 text-xs whitespace-nowrap">
                       {STAGE_LABELS[d.stage] ?? d.stage}
                     </td>
 
                     {/* Expected close date — editable */}
-                    <td className="py-2 pr-4">
+                    <td className="px-5 py-3 pr-4">
                       <input
                         type="date"
                         value={override.dateOverride ?? origDate}
@@ -188,13 +188,13 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
                           setDealOverride(d.id, { dateOverride: (!val || val === origDate) ? null : val });
                         }}
                         className={`w-32 px-1.5 py-1 text-xs border rounded-md focus:outline-none focus:ring-2 focus:ring-teal/40 ${
-                          d.hasDateOverride ? "border-teal text-teal font-semibold" : "border-gray-200 text-gray-700"
+                          d.hasDateOverride ? "border-teal text-teal font-semibold" : "border-slate-200 text-slate-700"
                         }`}
                       />
                     </td>
 
                     {/* Value — editable */}
-                    <td className="py-2 pr-4 text-right">
+                    <td className="px-5 py-3 pr-4 text-right">
                       <input
                         type="number"
                         value={override.valueOverride ?? ""}
@@ -205,42 +205,42 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
                           setDealOverride(d.id, { valueOverride: n && n > 0 ? n : null });
                         }}
                         className={`w-28 px-1.5 py-1 text-xs text-right border rounded-md focus:outline-none focus:ring-2 focus:ring-teal/40 ${
-                          d.hasValueOverride ? "border-teal text-teal font-semibold" : "border-gray-200 text-gray-700"
+                          d.hasValueOverride ? "border-teal text-teal font-semibold" : "border-slate-200 text-slate-700"
                         }`}
                       />
                     </td>
 
                     {/* Close rate */}
-                    <td className="py-2 pr-4 text-right">
-                      <p className={`${closeRateChanged ? "text-teal font-semibold" : "text-gray-700"}`}>
+                    <td className="px-5 py-3 pr-4 text-right">
+                      <p className={`${closeRateChanged ? "text-teal font-semibold" : "text-slate-700"}`}>
                         {formatPct(d.adjustedCloseRate)}
                       </p>
                       {closeRateChanged && (
-                        <p className="text-[10px] text-gray-400 line-through">{formatPct(d.closeRate)}</p>
+                        <p className="text-[10px] text-slate-400 line-through">{formatPct(d.closeRate)}</p>
                       )}
                     </td>
 
                     {/* Timing factor */}
-                    <td className="py-2 pr-4 text-right">
-                      <p className={`${timingChanged ? "text-teal font-semibold" : "text-gray-700"}`}>
+                    <td className="px-5 py-3 pr-4 text-right">
+                      <p className={`${timingChanged ? "text-teal font-semibold" : "text-slate-700"}`}>
                         {formatPct(d.adjustedTimingFactor)}
                       </p>
                       {timingChanged && (
-                        <p className="text-[10px] text-gray-400 line-through">{formatPct(d.timingFactor)}</p>
+                        <p className="text-[10px] text-slate-400 line-through">{formatPct(d.timingFactor)}</p>
                       )}
                     </td>
 
                     {/* Contribution */}
-                    <td className="py-2 text-right">
+                    <td className="px-5 py-3 text-right">
                       {d.excluded ? (
-                        <p className="text-gray-400 line-through text-xs">{formatCurrency(d.contribution)}</p>
+                        <p className="text-slate-400 line-through text-xs">{formatCurrency(d.contribution)}</p>
                       ) : (
                         <>
                           <p className={`font-semibold ${contribChanged ? "text-teal" : "text-navy"}`}>
                             {formatCurrency(d.adjustedContribution)}
                           </p>
                           {contribChanged && (
-                            <p className="text-[10px] text-gray-400 line-through">{formatCurrency(d.contribution)}</p>
+                            <p className="text-[10px] text-slate-400 line-through">{formatCurrency(d.contribution)}</p>
                           )}
                         </>
                       )}
@@ -250,8 +250,8 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
               })}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-gray-200">
-                <td colSpan={7} className="pt-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <tr className="border-t-2 border-slate-200">
+                <td colSpan={7} className="pt-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   {hasChanges ? "Adjusted Weighted Forecast" : "Total Weighted Forecast"}
                 </td>
                 <td className="pt-3 text-right">
@@ -259,7 +259,7 @@ export function WeightedForecastModal({ open, onClose, deals, total, year }: Pro
                     {formatCurrency(adjustedTotal)}
                   </p>
                   {hasChanges && (
-                    <p className="text-[10px] text-gray-400 line-through">{formatCurrency(total)}</p>
+                    <p className="text-[10px] text-slate-400 line-through">{formatCurrency(total)}</p>
                   )}
                 </td>
               </tr>
