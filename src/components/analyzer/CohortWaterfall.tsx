@@ -4,7 +4,8 @@
 import { useEffect, useState, useRef } from "react";
 import { formatCurrency, formatPct } from "@/lib/format";
 import { ExportButton } from "@/components/ui/ExportButton";
-import type { CohortAnalysisResult, CohortRow } from "@/lib/cohort-analysis";
+import { CohortBucketModal } from "./CohortBucketModal";
+import type { CohortAnalysisResult, CohortRow, BucketDeal } from "@/lib/cohort-analysis";
 
 const CATEGORY_META: Record<CohortRow["category"], { label: string; colorClass: string }> = {
   closed_won:  { label: "Closed Won",       colorClass: "bg-emerald-100 text-emerald-700" },
@@ -24,15 +25,24 @@ type Props = {
   manifestIdB: string;
 };
 
+type ActiveBucket = {
+  title: string;
+  deals: BucketDeal[];
+  showStageA: boolean;
+  showStageB: boolean;
+};
+
 export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
   const outerRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<CohortAnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [active, setActive] = useState<ActiveBucket | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setActive(null);
     fetch(`/api/analyzer/cohort?manifestA=${manifestIdA}&manifestB=${manifestIdB}`)
       .then((r) => r.json())
       .then((j: unknown) => {
@@ -65,6 +75,26 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
   const dateB = new Date(data.snapshotAtB).toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric",
   });
+
+  function openWaterfallBucket(cat: CohortRow["category"], deals: BucketDeal[]) {
+    if (deals.length === 0) return;
+    setActive({
+      title: `${CATEGORY_META[cat].label} — ${deals.length} deals`,
+      deals,
+      showStageA: true,
+      showStageB: cat !== "not_found",
+    });
+  }
+
+  function openFlowBucket(label: string, deals: BucketDeal[], opts: { showStageA: boolean }) {
+    if (deals.length === 0) return;
+    setActive({
+      title: `${label} — ${deals.length} deals`,
+      deals,
+      showStageA: opts.showStageA,
+      showStageB: true,
+    });
+  }
 
   return (
     <div ref={outerRef} className="space-y-4">
@@ -105,11 +135,18 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
             </thead>
             <tbody>
               {CATEGORY_ORDER.map((cat) => {
-                const row = rowMap.get(cat) ?? { category: cat, dealCount: 0, totalValue: 0 };
+                const row = rowMap.get(cat) ?? { category: cat, dealCount: 0, totalValue: 0, deals: [] };
                 const meta = CATEGORY_META[cat];
                 const pct = data.cohortTotal > 0 ? row.dealCount / data.cohortTotal : 0;
+                const clickable = row.dealCount > 0;
                 return (
-                  <tr key={cat} className="border-b border-slate-100 last:border-0 even:bg-slate-50/40 hover:bg-teal/5 transition-colors">
+                  <tr
+                    key={cat}
+                    onClick={clickable ? () => openWaterfallBucket(cat, row.deals) : undefined}
+                    className={`border-b border-slate-100 last:border-0 even:bg-slate-50/40 transition-colors ${
+                      clickable ? "cursor-pointer hover:bg-teal/5" : ""
+                    }`}
+                  >
                     <td className="px-5 py-3 pr-4">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${meta.colorClass}`}
@@ -138,7 +175,16 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
           Pipeline Flow: {dateA} → {dateB}
         </h3>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="bg-slate-50 rounded-card p-4 border border-slate-200">
+          <button
+            type="button"
+            disabled={data.flowMetrics.newDeals === 0}
+            onClick={() =>
+              openFlowBucket("New Pipeline", data.flowMetrics.newDealsList, { showStageA: false })
+            }
+            className={`text-left bg-slate-50 rounded-card p-4 border border-slate-200 transition-colors ${
+              data.flowMetrics.newDeals > 0 ? "cursor-pointer hover:bg-teal/5" : "cursor-default opacity-90"
+            }`}
+          >
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               New Pipeline
             </p>
@@ -146,8 +192,18 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
               {data.flowMetrics.newDeals} deals
             </p>
             <p className="text-xs text-slate-500">{formatCurrency(data.flowMetrics.newValue)}</p>
-          </div>
-          <div className="bg-emerald-50/70 rounded-card p-4 border border-emerald-100">
+          </button>
+
+          <button
+            type="button"
+            disabled={data.flowMetrics.wonDeals === 0}
+            onClick={() =>
+              openFlowBucket("Won", data.flowMetrics.wonDealsList, { showStageA: true })
+            }
+            className={`text-left bg-emerald-50/70 rounded-card p-4 border border-emerald-100 transition-colors ${
+              data.flowMetrics.wonDeals > 0 ? "cursor-pointer hover:bg-emerald-100/60" : "cursor-default opacity-90"
+            }`}
+          >
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Won
             </p>
@@ -155,8 +211,18 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
               {data.flowMetrics.wonDeals} deals
             </p>
             <p className="text-xs text-slate-500">{formatCurrency(data.flowMetrics.wonValue)}</p>
-          </div>
-          <div className="bg-red-50/70 rounded-card p-4 border border-red-100">
+          </button>
+
+          <button
+            type="button"
+            disabled={data.flowMetrics.lostDeals === 0}
+            onClick={() =>
+              openFlowBucket("Lost", data.flowMetrics.lostDealsList, { showStageA: true })
+            }
+            className={`text-left bg-red-50/70 rounded-card p-4 border border-red-100 transition-colors ${
+              data.flowMetrics.lostDeals > 0 ? "cursor-pointer hover:bg-red-100/60" : "cursor-default opacity-90"
+            }`}
+          >
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Lost
             </p>
@@ -164,7 +230,8 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
               {data.flowMetrics.lostDeals} deals
             </p>
             <p className="text-xs text-slate-500">{formatCurrency(data.flowMetrics.lostValue)}</p>
-          </div>
+          </button>
+
           <div className="bg-slate-50 rounded-card p-4 border border-slate-200">
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
               Net Pipeline Change
@@ -180,6 +247,15 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
           </div>
         </div>
       </div>
+
+      <CohortBucketModal
+        open={active !== null}
+        onClose={() => setActive(null)}
+        title={active?.title ?? ""}
+        deals={active?.deals ?? []}
+        showStageA={active?.showStageA ?? true}
+        showStageB={active?.showStageB ?? true}
+      />
     </div>
   );
 }
