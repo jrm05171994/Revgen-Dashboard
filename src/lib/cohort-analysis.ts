@@ -5,19 +5,38 @@ const STAGE_ORDER: Record<string, number> = {
   first_convo: 0, opp_qual: 1, stakeholder: 2, verbal: 3, contracting: 4, closed_won: 5, lost: -1,
 };
 
+export type BucketDeal = {
+  dealId: string;
+  name: string;
+  companyName: string | null;
+  value: number;
+  stageA: string | null;   // null when deal didn't exist at snapshot A (New Pipeline)
+  stageB: string | null;   // null when deal didn't exist at snapshot B (Not Found)
+  status: string | null;   // snapshot B status (or A's when deal not in B)
+  source: string | null;
+  typeOfDeal: string | null;
+  daysInStage: number | null;
+  firstConvoDate: string | null;
+  expectedClosedDate: string | null;
+};
+
 export type CohortRow = {
   category: "closed_won" | "closed_lost" | "advanced" | "held" | "regressed" | "not_found";
   dealCount: number;
   totalValue: number;
+  deals: BucketDeal[];
 };
 
 export type FlowMetrics = {
   newDeals: number;
   newValue: number;
+  newDealsList: BucketDeal[];
   wonDeals: number;
   wonValue: number;
+  wonDealsList: BucketDeal[];
   lostDeals: number;
   lostValue: number;
+  lostDealsList: BucketDeal[];
   netPipelineChange: number;
 };
 
@@ -55,68 +74,124 @@ export async function getCohortAnalysis(
 
   const cohortDeals = manifestA.deals.filter((d) => isActivePipeline(d.status));
   const bByDealId = new Map(manifestB.deals.map((d) => [d.dealId, d]));
+  const aByDealId = new Map(manifestA.deals.map((d) => [d.dealId, d]));
 
-  const counts: Record<CohortRow["category"], { count: number; value: number }> = {
-    closed_won: { count: 0, value: 0 },
-    closed_lost: { count: 0, value: 0 },
-    advanced: { count: 0, value: 0 },
-    held: { count: 0, value: 0 },
-    regressed: { count: 0, value: 0 },
-    not_found: { count: 0, value: 0 },
+  // Collect all deal IDs we need live data for (cohort + any B-only deals for flow metrics).
+  const bPipelineDeals = manifestB.deals.filter((d) => isActivePipeline(d.status));
+  const allDealIds = new Set<string>();
+  for (const d of cohortDeals) allDealIds.add(d.dealId);
+  for (const d of bPipelineDeals) allDealIds.add(d.dealId);
+  for (const d of manifestB.deals) {
+    if (d.stage === "closed_won" || d.stage === "lost") allDealIds.add(d.dealId);
+  }
+
+  const liveDeals = await prisma.deal.findMany({
+    where: { id: { in: Array.from(allDealIds) } },
+    include: { company: true },
+  });
+  const liveByDealId = new Map(liveDeals.map((d) => [d.id, d]));
+
+  const today = new Date();
+
+  function makeBucketDeal(
+    dealId: string,
+    snapshotA: typeof manifestA.deals[number] | undefined,
+    snapshotB: typeof manifestB.deals[number] | undefined,
+  ): BucketDeal {
+    const live = liveByDealId.get(dealId);
+    // Prefer B's name/value (most recent snapshot context), fall back to A.
+    const src = snapshotB ?? snapshotA;
+    return {
+      dealId,
+      name: src?.name ?? live?.name ?? dealId,
+      companyName: live?.company?.name ?? null,
+      value: Number((src?.value ?? 0)),
+      stageA: snapshotA?.stage ?? null,
+      stageB: snapshotB?.stage ?? null,
+      status: (snapshotB?.status ?? snapshotA?.status) ?? null,
+      source: (live?.source as string | null) ?? null,
+      typeOfDeal: (live?.typeOfDeal as string | null) ?? null,
+      daysInStage: live?.stageEnteredAt
+        ? Math.floor((today.getTime() - new Date(live.stageEnteredAt).getTime()) / 86400000)
+        : null,
+      firstConvoDate: live?.firstConvoDate?.toISOString() ?? null,
+      expectedClosedDate: live?.expectedClosedDate?.toISOString() ?? null,
+    };
+  }
+
+  const counts: Record<CohortRow["category"], { count: number; value: number; deals: BucketDeal[] }> = {
+    closed_won:  { count: 0, value: 0, deals: [] },
+    closed_lost: { count: 0, value: 0, deals: [] },
+    advanced:    { count: 0, value: 0, deals: [] },
+    held:        { count: 0, value: 0, deals: [] },
+    regressed:   { count: 0, value: 0, deals: [] },
+    not_found:   { count: 0, value: 0, deals: [] },
   };
 
-  for (const deal of cohortDeals) {
-    const v = Number(deal.value ?? 0);
-    const inB = bByDealId.get(deal.dealId);
-    if (!inB) {
+  for (const dealA of cohortDeals) {
+    const v = Number(dealA.value ?? 0);
+    const dealB = bByDealId.get(dealA.dealId);
+    const bd = makeBucketDeal(dealA.dealId, dealA, dealB);
+
+    if (!dealB) {
       counts.not_found.count += 1;
       counts.not_found.value += v;
+      counts.not_found.deals.push(bd);
       continue;
     }
-    if (inB.stage === "closed_won") {
+    if (dealB.stage === "closed_won") {
       counts.closed_won.count += 1;
       counts.closed_won.value += v;
-    } else if (inB.stage === "lost") {
+      counts.closed_won.deals.push(bd);
+    } else if (dealB.stage === "lost") {
       counts.closed_lost.count += 1;
       counts.closed_lost.value += v;
+      counts.closed_lost.deals.push(bd);
     } else {
-      const aIdx = STAGE_ORDER[deal.stage ?? ""] ?? -1;
-      const bIdx = STAGE_ORDER[inB.stage ?? ""] ?? -1;
+      const aIdx = STAGE_ORDER[dealA.stage ?? ""] ?? -1;
+      const bIdx = STAGE_ORDER[dealB.stage ?? ""] ?? -1;
       if (bIdx > aIdx) {
         counts.advanced.count += 1;
         counts.advanced.value += v;
+        counts.advanced.deals.push(bd);
       } else if (bIdx === aIdx) {
         counts.held.count += 1;
         counts.held.value += v;
+        counts.held.deals.push(bd);
       } else {
         counts.regressed.count += 1;
         counts.regressed.value += v;
+        counts.regressed.deals.push(bd);
       }
     }
   }
 
   const cohortRows: CohortRow[] = (
-    Object.entries(counts) as [CohortRow["category"], { count: number; value: number }][]
-  ).map(([category, { count, value }]) => ({ category, dealCount: count, totalValue: value }));
+    Object.entries(counts) as [CohortRow["category"], { count: number; value: number; deals: BucketDeal[] }][]
+  ).map(([category, { count, value, deals }]) => ({
+    category, dealCount: count, totalValue: value, deals,
+  }));
 
   // Flow metrics
   const aPipelineIds = new Set(cohortDeals.map((d) => d.dealId));
-  const bPipelineDeals = manifestB.deals.filter((d) => isActivePipeline(d.status));
 
-  const newDeals = bPipelineDeals.filter((d) => !aPipelineIds.has(d.dealId));
-  const wonDeals = manifestB.deals.filter((d) => d.stage === "closed_won" && aPipelineIds.has(d.dealId));
-  const lostDeals = manifestB.deals.filter((d) => d.stage === "lost" && aPipelineIds.has(d.dealId));
+  const newDealsRaw = bPipelineDeals.filter((d) => !aPipelineIds.has(d.dealId));
+  const wonDealsRaw = manifestB.deals.filter((d) => d.stage === "closed_won" && aPipelineIds.has(d.dealId));
+  const lostDealsRaw = manifestB.deals.filter((d) => d.stage === "lost" && aPipelineIds.has(d.dealId));
 
   const aTotal = cohortDeals.reduce((s, d) => s + Number(d.value ?? 0), 0);
   const bTotal = bPipelineDeals.reduce((s, d) => s + Number(d.value ?? 0), 0);
 
   const flowMetrics: FlowMetrics = {
-    newDeals: newDeals.length,
-    newValue: newDeals.reduce((s, d) => s + Number(d.value ?? 0), 0),
-    wonDeals: wonDeals.length,
-    wonValue: wonDeals.reduce((s, d) => s + Number(d.value ?? 0), 0),
-    lostDeals: lostDeals.length,
-    lostValue: lostDeals.reduce((s, d) => s + Number(d.value ?? 0), 0),
+    newDeals: newDealsRaw.length,
+    newValue: newDealsRaw.reduce((s, d) => s + Number(d.value ?? 0), 0),
+    newDealsList: newDealsRaw.map((d) => makeBucketDeal(d.dealId, aByDealId.get(d.dealId), d)),
+    wonDeals: wonDealsRaw.length,
+    wonValue: wonDealsRaw.reduce((s, d) => s + Number(d.value ?? 0), 0),
+    wonDealsList: wonDealsRaw.map((d) => makeBucketDeal(d.dealId, aByDealId.get(d.dealId), d)),
+    lostDeals: lostDealsRaw.length,
+    lostValue: lostDealsRaw.reduce((s, d) => s + Number(d.value ?? 0), 0),
+    lostDealsList: lostDealsRaw.map((d) => makeBucketDeal(d.dealId, aByDealId.get(d.dealId), d)),
     netPipelineChange: bTotal - aTotal,
   };
 
