@@ -42,6 +42,7 @@ export function CohortWaterfall({ manifestIdA, manifestIdB }: Props) {
   useEffect(() => {
     setLoading(true);
     setError(null);
+    setActive(null);
     fetch(`/api/analyzer/cohort?manifestA=${manifestIdA}&manifestB=${manifestIdB}`)
       .then((r) => r.json())
       .then((j: unknown) => {
