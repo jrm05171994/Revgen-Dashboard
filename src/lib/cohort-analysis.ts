@@ -78,11 +78,14 @@ export async function getCohortAnalysis(
 
   // Collect all deal IDs we need live data for (cohort + any B-only deals for flow metrics).
   const bPipelineDeals = manifestB.deals.filter((d) => isActivePipeline(d.status));
+  const aPipelineIds = new Set(cohortDeals.map((d) => d.dealId));
   const allDealIds = new Set<string>();
   for (const d of cohortDeals) allDealIds.add(d.dealId);
   for (const d of bPipelineDeals) allDealIds.add(d.dealId);
   for (const d of manifestB.deals) {
-    if (d.stage === "closed_won" || d.stage === "lost") allDealIds.add(d.dealId);
+    if ((d.stage === "closed_won" || d.stage === "lost") && aPipelineIds.has(d.dealId)) {
+      allDealIds.add(d.dealId);
+    }
   }
 
   const liveDeals = await prisma.deal.findMany({
@@ -173,8 +176,6 @@ export async function getCohortAnalysis(
   }));
 
   // Flow metrics
-  const aPipelineIds = new Set(cohortDeals.map((d) => d.dealId));
-
   const newDealsRaw = bPipelineDeals.filter((d) => !aPipelineIds.has(d.dealId));
   const wonDealsRaw = manifestB.deals.filter((d) => d.stage === "closed_won" && aPipelineIds.has(d.dealId));
   const lostDealsRaw = manifestB.deals.filter((d) => d.stage === "lost" && aPipelineIds.has(d.dealId));
