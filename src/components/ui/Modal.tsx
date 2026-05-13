@@ -20,12 +20,26 @@ type Props = {
   subtitle?: string;
 };
 
+// Module-level stack of open modal close handlers. The topmost (last pushed)
+// is the only one that should react to a global ESC keypress.
+const modalStack: Array<() => void> = [];
+
+if (typeof window !== "undefined") {
+  window.addEventListener("keydown", (e: KeyboardEvent) => {
+    if (e.key !== "Escape") return;
+    const top = modalStack[modalStack.length - 1];
+    if (top) top();
+  });
+}
+
 export function Modal({ open, onClose, title, children, width = "lg" }: Props) {
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    modalStack.push(onClose);
+    return () => {
+      const idx = modalStack.lastIndexOf(onClose);
+      if (idx !== -1) modalStack.splice(idx, 1);
+    };
   }, [open, onClose]);
 
   if (!open) return null;
