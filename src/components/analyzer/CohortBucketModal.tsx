@@ -41,7 +41,7 @@ export function CohortBucketModal({
 
   return (
     <>
-      <Modal open={open} onClose={onClose} title={title} width="2xl">
+      <Modal open={open} onClose={() => { setSelected(null); onClose(); }} title={title} width="2xl">
         {deals.length === 0 ? (
           <p className="text-sm text-slate-400 text-center py-8">No deals in this bucket.</p>
         ) : (
