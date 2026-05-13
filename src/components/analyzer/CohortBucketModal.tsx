@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { StagePill } from "@/components/ui/StagePill";
 import { DealDetailModal } from "@/components/dashboard/DealDetailModal";
@@ -38,6 +38,10 @@ export function CohortBucketModal({
   open, onClose, title, deals, showStageA = true, showStageB = true,
 }: Props) {
   const [selected, setSelected] = useState<DealRow | null>(null);
+
+  useEffect(() => {
+    if (!open) setSelected(null);
+  }, [open]);
 
   return (
     <>
